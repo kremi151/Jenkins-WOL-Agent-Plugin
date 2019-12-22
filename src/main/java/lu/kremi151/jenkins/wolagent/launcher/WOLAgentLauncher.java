@@ -34,16 +34,22 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class WOLAgentLauncher extends SSHLauncher {
 
+    private static final Logger LOGGER = java.util.logging.Logger.getLogger(WOLAgentLauncher.class.getName());
+
     private String macAddress;
+    private boolean autoSuspend;
 
     public WOLAgentLauncher(
             @NonNull String host,
             int port,
             String credentialsId,
             String macAddress,
+            boolean autoSuspend,
             String jvmOptions,
             String javaPath,
             String prefixStartSlaveCmd,
@@ -55,12 +61,14 @@ public class WOLAgentLauncher extends SSHLauncher {
     ) {
         super(host, port, credentialsId, jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime, sshHostKeyVerificationStrategy);
         this.macAddress = macAddress;
+        this.autoSuspend = autoSuspend;
     }
 
     @DataBoundConstructor
-    public WOLAgentLauncher(@NonNull String host, int port, String credentialsId, String macAddress) {
+    public WOLAgentLauncher(@NonNull String host, int port, String credentialsId, String macAddress, boolean autoSuspend) {
         super(host, port, credentialsId);
         this.macAddress = macAddress;
+        this.autoSuspend = autoSuspend;
     }
 
     @Override
@@ -104,6 +112,28 @@ public class WOLAgentLauncher extends SSHLauncher {
         super.launch(computer, listener);
     }
 
+    private void trySuspend(TaskListener listener) throws IOException, InterruptedException {
+        if (!this.autoSuspend) {
+            return;
+        }
+        final int result = this.getConnection().exec("systemctl suspend", listener.getLogger());
+        if (result != 0) {
+            LOGGER.log(Level.WARNING, "Could not suspend remote, error code {0}", result);
+        } else {
+            LOGGER.log(Level.INFO, "Remote was requested to suspend");
+        }
+    }
+
+    @Override
+    public void beforeDisconnect(SlaveComputer computer, TaskListener listener) {
+        try {
+            trySuspend(listener);
+        } catch (IOException | InterruptedException e) {
+            LOGGER.log(Level.WARNING, "An exception occurred while requesting suspending on remote", e);
+        }
+        super.beforeDisconnect(computer, listener);
+    }
+
     @DataBoundSetter
     public void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
@@ -111,6 +141,15 @@ public class WOLAgentLauncher extends SSHLauncher {
 
     public String getMacAddress() {
         return this.macAddress;
+    }
+
+    @DataBoundSetter
+    public void setAutoSuspend(boolean autoSuspend) {
+        this.autoSuspend = autoSuspend;
+    }
+
+    public boolean isAutoSuspend() {
+        return this.autoSuspend;
     }
 
     @Extension
