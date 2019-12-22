@@ -43,6 +43,8 @@ public class WOLAgentLauncher extends SSHLauncher {
 
     private String macAddress;
     private boolean autoSuspend;
+    private boolean suspendAsSuperuser;
+    private boolean ignoreSessionsOnSuspend;
 
     public WOLAgentLauncher(
             @NonNull String host,
@@ -50,6 +52,8 @@ public class WOLAgentLauncher extends SSHLauncher {
             String credentialsId,
             String macAddress,
             boolean autoSuspend,
+            boolean suspendAsSuperuser,
+            boolean ignoreSessionsOnSuspend,
             String jvmOptions,
             String javaPath,
             String prefixStartSlaveCmd,
@@ -62,13 +66,25 @@ public class WOLAgentLauncher extends SSHLauncher {
         super(host, port, credentialsId, jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime, sshHostKeyVerificationStrategy);
         this.macAddress = macAddress;
         this.autoSuspend = autoSuspend;
+        this.suspendAsSuperuser = suspendAsSuperuser;
+        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
     }
 
     @DataBoundConstructor
-    public WOLAgentLauncher(@NonNull String host, int port, String credentialsId, String macAddress, boolean autoSuspend) {
+    public WOLAgentLauncher(
+            @NonNull String host,
+            int port,
+            String credentialsId,
+            String macAddress,
+            boolean autoSuspend,
+            boolean suspendAsSuperuser,
+            boolean ignoreSessionsOnSuspend
+    ) {
         super(host, port, credentialsId);
         this.macAddress = macAddress;
         this.autoSuspend = autoSuspend;
+        this.suspendAsSuperuser = suspendAsSuperuser;
+        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
     }
 
     @Override
@@ -116,7 +132,14 @@ public class WOLAgentLauncher extends SSHLauncher {
         if (!this.autoSuspend) {
             return;
         }
-        final int result = this.getConnection().exec("systemctl suspend", listener.getLogger());
+        String suspendCommand = "systemctl suspend";
+        if (this.suspendAsSuperuser) {
+            suspendCommand = "sudo " + suspendCommand;
+        }
+        if (this.ignoreSessionsOnSuspend) {
+            suspendCommand = suspendCommand + " -i";
+        }
+        final int result = this.getConnection().exec(suspendCommand, listener.getLogger());
         if (result != 0) {
             LOGGER.log(Level.WARNING, "Could not suspend remote, error code {0}", result);
         } else {
@@ -150,6 +173,24 @@ public class WOLAgentLauncher extends SSHLauncher {
 
     public boolean isAutoSuspend() {
         return this.autoSuspend;
+    }
+
+    @DataBoundSetter
+    public void setSuspendAsSuperuser(boolean suspendAsSuperuser) {
+        this.suspendAsSuperuser = suspendAsSuperuser;
+    }
+
+    public boolean isSuspendAsSuperuser() {
+        return suspendAsSuperuser;
+    }
+
+    @DataBoundSetter
+    public void setIgnoreSessionsOnSuspend(boolean ignoreSessionsOnSuspend) {
+        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
+    }
+
+    public boolean isIgnoreSessionsOnSuspend() {
+        return ignoreSessionsOnSuspend;
     }
 
     @Extension
