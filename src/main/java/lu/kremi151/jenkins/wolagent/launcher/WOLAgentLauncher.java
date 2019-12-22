@@ -19,12 +19,16 @@ package lu.kremi151.jenkins.wolagent.launcher;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.TaskListener;
+import hudson.plugins.sshslaves.Messages;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
 import hudson.slaves.SlaveComputer;
+import hudson.util.FormValidation;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -116,6 +120,12 @@ public class WOLAgentLauncher extends SSHLauncher {
         @Override
         public String getDisplayName() {
             return "Send commands over SSH, but wake it up over LAN first";
+        }
+
+        public FormValidation doCheckMacAddress(@QueryParameter String macAddress) {
+            return (StringUtils.isNotBlank(macAddress) && macAddress.matches("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"))
+                    ? FormValidation.ok()
+                    : FormValidation.error(Messages.SSHLauncher_HostNotSpecified());
         }
 
     }
