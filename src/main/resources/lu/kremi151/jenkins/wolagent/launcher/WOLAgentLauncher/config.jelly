@@ -7,6 +7,9 @@
   <f:entry title="${%MacAddress}" field="macAddress">
     <f:textbox/>
   </f:entry>
+  <f:entry title="${%AutoSuspend}" field="autoSuspend">
+    <f:checkbox/>
+  </f:entry>
 
   <st:include page="config.jelly" class="${descriptor.sshConnectorClass}"/>
 </j:jelly>
