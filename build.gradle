@@ -6,8 +6,6 @@ group 'lu.kremi151'
 version '1.0-SNAPSHOT'
 description "A description of your plugin"
 
-sourceCompatibility = 1.8
-
 jenkinsPlugin {
     coreVersion = "2.190.3"                                             // Version of Jenkins core this plugin depends on.
     displayName = "Wake on LAN agent plugin for Jenkins"                // Human-readable name of plugin.
@@ -23,4 +21,9 @@ jenkinsPlugin {
             email "kremi151dev@gmail.com"
         }
     }
+}
+
+dependencies {
+    //compile group: 'org.jenkins-ci.plugins', name: 'ssh-slaves', version: '1.31.0', ext: 'jar'
+    jenkinsPlugins files('libs/ssh-slaves.jar')
 }
