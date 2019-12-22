@@ -1,5 +1,11 @@
 plugins {
     id "org.jenkins-ci.jpi" version "0.35.0"
+    id "java"
+}
+
+compileJava {
+    sourceCompatibility = '1.8'
+    targetCompatibility = '1.8'
 }
 
 group 'lu.kremi151'
