@@ -10,6 +10,12 @@
   <f:entry title="${%AutoSuspend}" field="autoSuspend">
     <f:checkbox/>
   </f:entry>
+  <f:entry title="${%SuspendAsSuperuser}" field="suspendAsSuperuser">
+    <f:checkbox/>
+  </f:entry>
+  <f:entry title="${%IgnoreSessionsOnSuspend}" field="ignoreSessionsOnSuspend">
+    <f:checkbox/>
+  </f:entry>
 
   <st:include page="config.jelly" class="${descriptor.sshConnectorClass}"/>
 </j:jelly>
