@@ -17,22 +17,29 @@
 package lu.kremi151.jenkins.wolagent.launcher;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Extension;
 import hudson.model.TaskListener;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
-import hudson.slaves.ComputerLauncher;
-import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.SlaveComputer;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.concurrent.*;
 
-public class WOLAgentLauncher extends DelegatingComputerLauncher {
+public class WOLAgentLauncher extends SSHLauncher {
+
+    private String macAddress;
 
     public WOLAgentLauncher(
             @NonNull String host,
             int port,
             String credentialsId,
+            String macAddress,
             String jvmOptions,
             String javaPath,
             String prefixStartSlaveCmd,
@@ -42,23 +49,75 @@ public class WOLAgentLauncher extends DelegatingComputerLauncher {
             Integer retryWaitTime,
             SshHostKeyVerificationStrategy sshHostKeyVerificationStrategy
     ) {
-        super(new SSHLauncher(host, port, credentialsId, jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime, sshHostKeyVerificationStrategy));
+        super(host, port, credentialsId, jvmOptions, javaPath, prefixStartSlaveCmd, suffixStartSlaveCmd, launchTimeoutSeconds, maxNumRetries, retryWaitTime, sshHostKeyVerificationStrategy);
+        this.macAddress = macAddress;
     }
 
     @DataBoundConstructor
-    public WOLAgentLauncher(@NonNull String host, int port, String credentialsId) {
-        super(new SSHLauncher(host, port, credentialsId));
+    public WOLAgentLauncher(@NonNull String host, int port, String credentialsId, String macAddress) {
+        super(host, port, credentialsId);
+        this.macAddress = macAddress;
     }
 
     @Override
-    public boolean isLaunchSupported() {
-        return launcher.isLaunchSupported();
-    }
+    public void launch(SlaveComputer computer, TaskListener listener) throws InterruptedException {
+        Process process;
+        try {
+            process = Runtime.getRuntime().exec("etherwake " + this.macAddress);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        process.waitFor(5L, TimeUnit.SECONDS);
 
-    @Override
-    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
+        final InetAddress address;
+        try {
+            address = InetAddress.getByName(this.getHost());
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+
+        final ExecutorService executorService = Executors.newSingleThreadExecutor();
+        try {
+            final Future future = executorService.submit(() -> {
+                while (true) {
+                    try {
+                        if (address.isReachable(2000)) {
+                            break;
+                        }
+                        Thread.sleep(2000L);
+                    } catch (IOException | InterruptedException e) {}
+                }
+            });
+            future.get(60L, TimeUnit.SECONDS);
+        } catch (ExecutionException | TimeoutException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (!executorService.isTerminated()) {
+                executorService.shutdown();
+            }
+        }
 
         super.launch(computer, listener);
+    }
+
+    @DataBoundSetter
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
+    }
+
+    public String getMacAddress() {
+        return this.macAddress;
+    }
+
+    @Extension
+    @Symbol({"wol", "wOLLauncher"})
+    public static class DescriptorImpl extends SSHLauncher.DescriptorImpl {
+
+        @Override
+        public String getDisplayName() {
+            return "Send commands over SSH, but wake it up over LAN first";
+        }
+
     }
 
 }
