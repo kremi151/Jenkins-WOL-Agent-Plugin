@@ -16,19 +16,8 @@
 
 package lu.kremi151.jenkins.wolagent;
 
-import hudson.Extension;
-import hudson.model.AbstractProject;
-import hudson.tasks.BuildWrapperDescriptor;
+import hudson.Plugin;
 
-public class WOLAgentPlugin {
-
-    @Extension
-    public static class DescriptorImpl extends BuildWrapperDescriptor {
-
-        @Override
-        public boolean isApplicable(AbstractProject<?, ?> item) {
-            return true;
-        }
-    }
+public class WOLAgentPlugin extends Plugin {
 
 }
