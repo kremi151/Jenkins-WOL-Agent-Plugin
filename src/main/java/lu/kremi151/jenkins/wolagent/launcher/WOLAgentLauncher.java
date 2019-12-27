@@ -19,7 +19,7 @@ package lu.kremi151.jenkins.wolagent.launcher;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.TaskListener;
-import hudson.plugins.sshslaves.Messages;
+import lu.kremi151.jenkins.wolagent.Messages;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
 import hudson.slaves.SlaveComputer;
@@ -219,13 +219,13 @@ public class WOLAgentLauncher extends SSHLauncher {
 
         @Override
         public String getDisplayName() {
-            return "Send commands over SSH, but wake it up over LAN first";
+            return Messages.WOLLauncher_AgentDescription();
         }
 
         public FormValidation doCheckMacAddress(@QueryParameter String macAddress) {
             return (StringUtils.isNotBlank(macAddress) && macAddress.matches("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"))
                     ? FormValidation.ok()
-                    : FormValidation.error(Messages.SSHLauncher_HostNotSpecified());
+                    : FormValidation.error(hudson.plugins.sshslaves.Messages.SSHLauncher_HostNotSpecified());
         }
 
         private boolean isPositiveNonDecimalNonZeroInt(String str) {
@@ -246,13 +246,13 @@ public class WOLAgentLauncher extends SSHLauncher {
         public FormValidation doCheckPingInterval(@QueryParameter String pingInterval) {
             return isPositiveNonDecimalNonZeroInt(pingInterval)
                     ? FormValidation.ok()
-                    : FormValidation.error("Expected a non-decimal number");
+                    : FormValidation.error(Messages.WOLLauncher_ExpectedPositiveInteger());
         }
 
         public FormValidation doCheckConnectionTimeout(@QueryParameter String connectionTimeout) {
             return isPositiveNonDecimalNonZeroInt(connectionTimeout)
                     ? FormValidation.ok()
-                    : FormValidation.error("Expected a non-decimal number");
+                    : FormValidation.error(Messages.WOLLauncher_ExpectedPositiveInteger());
         }
 
     }
