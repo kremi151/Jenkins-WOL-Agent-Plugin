@@ -19,9 +19,12 @@ package lu.kremi151.jenkins.wolagent.launcher;
 import hudson.Extension;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
+import hudson.remoting.Channel;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.SlaveComputer;
+import jline.internal.Nullable;
+import lu.kremi151.jenkins.wolagent.remoting.callables.Suspend;
 import lu.kremi151.jenkins.wolagent.slave.WOLSlave;
 
 import java.io.IOException;
@@ -45,12 +48,13 @@ public class WOLLauncher extends DelegatingComputerLauncher {
         this.launcher = launcher;
     }
 
-    @Override
-    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        Process process = Runtime.getRuntime().exec("etherwake " + wolSlave.getMacAddress());
-        process.waitFor(5L, TimeUnit.SECONDS);
-
-        final InetAddress address = InetAddress.getByName(this.getHost());
+    private void ping(@Nullable String host) throws InterruptedException, IOException {
+        if (host == null) {
+            // No host specified, so we apply a cooldown of 5 seconds
+            Thread.sleep(5000L);
+            return;
+        }
+        final InetAddress address = InetAddress.getByName(host);
 
         final ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
@@ -72,33 +76,35 @@ public class WOLLauncher extends DelegatingComputerLauncher {
                 executorService.shutdown();
             }
         }
+    }
+
+    @Override
+    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
+        Process process = Runtime.getRuntime().exec("etherwake " + wolSlave.getMacAddress());
+        process.waitFor(5L, TimeUnit.SECONDS);
+
+        //TODO: Find a way to ping the host
+        ping(null);
 
         super.launch(computer, listener);
     }
 
-    private void trySuspend(TaskListener listener) throws IOException, InterruptedException {
+    private void trySuspend(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
         if (!wolSlave.isAutoSuspend()) {
             return;
         }
-        String suspendCommand = "systemctl suspend";
-        if (wolSlave.isSuspendAsSuperuser()) {
-            suspendCommand = "sudo " + suspendCommand;
+        final Channel channel = computer.getChannel();
+        if (channel == null) {
+            listener.error("Cannot send suspend command, channel is null");
+            return;
         }
-        if (wolSlave.isIgnoreSessionsOnSuspend()) {
-            suspendCommand = suspendCommand + " -i";
-        }
-        final int result = this.getConnection().exec(suspendCommand, listener.getLogger());
-        if (result != 0) {
-            LOGGER.log(Level.WARNING, "Could not suspend remote, error code {0}", result);
-        } else {
-            LOGGER.log(Level.INFO, "Remote was requested to suspend");
-        }
+        channel.call(new Suspend(wolSlave.isSuspendAsSuperuser(), wolSlave.isIgnoreSessionsOnSuspend()));
     }
 
     @Override
     public void beforeDisconnect(SlaveComputer computer, TaskListener listener) {
         try {
-            trySuspend(listener);
+            trySuspend(computer, listener);
         } catch (IOException | InterruptedException e) {
             LOGGER.log(Level.WARNING, "An exception occurred while requesting suspending on remote", e);
         }
