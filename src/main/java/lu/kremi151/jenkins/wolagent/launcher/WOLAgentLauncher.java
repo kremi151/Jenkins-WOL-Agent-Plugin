@@ -45,6 +45,8 @@ public class WOLAgentLauncher extends SSHLauncher {
     private boolean autoSuspend;
     private boolean suspendAsSuperuser;
     private boolean ignoreSessionsOnSuspend;
+    private int pingInterval = 2000;
+    private int connectionTimeout = 60000;
 
     public WOLAgentLauncher(
             @NonNull String host,
@@ -109,14 +111,14 @@ public class WOLAgentLauncher extends SSHLauncher {
             final Future future = executorService.submit(() -> {
                 while (true) {
                     try {
-                        if (address.isReachable(2000)) {
+                        if (address.isReachable(pingInterval)) {
                             break;
                         }
-                        Thread.sleep(2000L);
+                        Thread.sleep((long) pingInterval);
                     } catch (IOException | InterruptedException e) {}
                 }
             });
-            future.get(60L, TimeUnit.SECONDS);
+            future.get(connectionTimeout, TimeUnit.MILLISECONDS);
         } catch (ExecutionException | TimeoutException e) {
             throw new RuntimeException(e);
         } finally {
@@ -193,6 +195,24 @@ public class WOLAgentLauncher extends SSHLauncher {
         return ignoreSessionsOnSuspend;
     }
 
+    @DataBoundSetter
+    public void setPingInterval(int pingInterval) {
+        this.pingInterval = pingInterval;
+    }
+
+    public int getPingInterval() {
+        return pingInterval;
+    }
+
+    @DataBoundSetter
+    public void setConnectionTimeout(int connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
+    }
+
+    public int getConnectionTimeout() {
+        return connectionTimeout;
+    }
+
     @Extension
     @Symbol({"wol", "wOLLauncher"})
     public static class DescriptorImpl extends SSHLauncher.DescriptorImpl {
@@ -206,6 +226,18 @@ public class WOLAgentLauncher extends SSHLauncher {
             return (StringUtils.isNotBlank(macAddress) && macAddress.matches("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"))
                     ? FormValidation.ok()
                     : FormValidation.error(Messages.SSHLauncher_HostNotSpecified());
+        }
+
+        public FormValidation doCheckPingInterval(@QueryParameter String pingInterval) {
+            return (StringUtils.isNotBlank(pingInterval) && pingInterval.matches("^[0-9]+$"))
+                    ? FormValidation.ok()
+                    : FormValidation.error("Expected a non-decimal number");
+        }
+
+        public FormValidation doCheckConnectionTimeout(@QueryParameter String connectionTimeout) {
+            return (StringUtils.isNotBlank(connectionTimeout) && connectionTimeout.matches("^[0-9]+$"))
+                    ? FormValidation.ok()
+                    : FormValidation.error("Expected a non-decimal number");
         }
 
     }
