@@ -44,6 +44,15 @@ public final class WOLSlave extends Slave {
 
     private final transient WOLLauncher wolLauncher;
 
+    private String macAddress;
+
+    private int pingInterval;
+    private int connectionTimeout;
+
+    private boolean autoSuspend;
+    private boolean suspendAsSuperuser;
+    private boolean ignoreSessionsOnSuspend;
+
     @DataBoundConstructor
     public WOLSlave(
             @Nonnull String name,
@@ -75,6 +84,12 @@ public final class WOLSlave extends Slave {
                 suspendAsSuperuser,
                 ignoreSessionsOnSuspend
         );
+        this.macAddress = macAddress;
+        this.pingInterval = pingInterval;
+        this.connectionTimeout = connectionTimeout;
+        this.autoSuspend = autoSuspend;
+        this.suspendAsSuperuser = suspendAsSuperuser;
+        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
     }
 
     public ComputerLauncher getDelegateLauncher() {
@@ -107,56 +122,62 @@ public final class WOLSlave extends Slave {
 
     @DataBoundSetter
     public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
         this.wolLauncher.setMacAddress(macAddress);
     }
 
     public String getMacAddress() {
-        return this.wolLauncher.getMacAddress();
+        return macAddress;
     }
 
     @DataBoundSetter
     public void setAutoSuspend(boolean autoSuspend) {
+        this.autoSuspend = autoSuspend;
         this.wolLauncher.setAutoSuspend(autoSuspend);
     }
 
     public boolean isAutoSuspend() {
-        return this.wolLauncher.isAutoSuspend();
+        return autoSuspend;
     }
 
     @DataBoundSetter
     public void setSuspendAsSuperuser(boolean suspendAsSuperuser) {
+        this.suspendAsSuperuser = suspendAsSuperuser;
         this.wolLauncher.setSuspendAsSuperuser(suspendAsSuperuser);
     }
 
     public boolean isSuspendAsSuperuser() {
-        return wolLauncher.isSuspendAsSuperuser();
+        return suspendAsSuperuser;
     }
 
     @DataBoundSetter
     public void setIgnoreSessionsOnSuspend(boolean ignoreSessionsOnSuspend) {
+        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
         this.wolLauncher.setIgnoreSessionsOnSuspend(ignoreSessionsOnSuspend);
     }
 
     public boolean isIgnoreSessionsOnSuspend() {
-        return wolLauncher.isIgnoreSessionsOnSuspend();
+        return ignoreSessionsOnSuspend;
     }
 
     @DataBoundSetter
     public void setPingInterval(int pingInterval) {
+        this.pingInterval = pingInterval;
         this.wolLauncher.setPingInterval(pingInterval);
     }
 
     public int getPingInterval() {
-        return wolLauncher.getPingInterval();
+        return pingInterval;
     }
 
     @DataBoundSetter
     public void setConnectionTimeout(int connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
         this.wolLauncher.setConnectionTimeout(connectionTimeout);
     }
 
     public int getConnectionTimeout() {
-        return wolLauncher.getConnectionTimeout();
+        return connectionTimeout;
     }
 
     private static ComputerLauncher ensureNotNullWithDefault(@Nullable ComputerLauncher launcher) {
