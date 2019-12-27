@@ -111,13 +111,13 @@ public final class WOLSlave extends Slave {
 
     @Override
     public ComputerLauncher getLauncher() {
+        LOGGER.log(Level.INFO, "Get delegate launcher");
         return getWolLauncher(null);
     }
 
     @Override
     @DataBoundSetter
     public void setLauncher(ComputerLauncher launcher) {
-        super.setLauncher(launcher);
         // Unpack WOLLauncher until we reach the base delegate launcher
         while (launcher != null && launcher.getClass() == WOLLauncher.class) {
             launcher = ((WOLLauncher) launcher).getLauncher();
@@ -128,6 +128,7 @@ public final class WOLSlave extends Slave {
 
     @DataBoundSetter
     public void setMacAddress(String macAddress) {
+        LOGGER.log(Level.INFO, "Set mac address to {0}", macAddress);
         this.macAddress = macAddress;
         this.getWolLauncher(null).setMacAddress(macAddress);
     }
@@ -138,6 +139,7 @@ public final class WOLSlave extends Slave {
 
     @DataBoundSetter
     public void setAutoSuspend(boolean autoSuspend) {
+        LOGGER.log(Level.INFO, "Set auto suspend to {0}", autoSuspend);
         this.autoSuspend = autoSuspend;
         this.getWolLauncher(null).setAutoSuspend(autoSuspend);
     }
@@ -148,6 +150,7 @@ public final class WOLSlave extends Slave {
 
     @DataBoundSetter
     public void setSuspendAsSuperuser(boolean suspendAsSuperuser) {
+        LOGGER.log(Level.INFO, "Set suspend as superuser to {0}", suspendAsSuperuser);
         this.suspendAsSuperuser = suspendAsSuperuser;
         this.getWolLauncher(null).setSuspendAsSuperuser(suspendAsSuperuser);
     }
@@ -168,6 +171,7 @@ public final class WOLSlave extends Slave {
 
     @DataBoundSetter
     public void setPingInterval(int pingInterval) {
+        LOGGER.log(Level.INFO, "Set ping interval to {0}", pingInterval);
         this.pingInterval = pingInterval;
         this.getWolLauncher(null).setPingInterval(pingInterval);
     }
@@ -178,6 +182,7 @@ public final class WOLSlave extends Slave {
 
     @DataBoundSetter
     public void setConnectionTimeout(int connectionTimeout) {
+        LOGGER.log(Level.INFO, "Set connection timeout to {0}", connectionTimeout);
         this.connectionTimeout = connectionTimeout;
         this.getWolLauncher(null).setConnectionTimeout(connectionTimeout);
     }
