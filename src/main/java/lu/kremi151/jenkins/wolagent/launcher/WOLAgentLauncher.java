@@ -17,7 +17,10 @@
 package lu.kremi151.jenkins.wolagent.launcher;
 
 import hudson.Extension;
+import hudson.Functions;
+import hudson.model.Descriptor;
 import hudson.model.TaskListener;
+import hudson.slaves.ComputerLauncher;
 import lu.kremi151.jenkins.wolagent.Messages;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.plugins.sshslaves.verifiers.SshHostKeyVerificationStrategy;
@@ -33,9 +36,12 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class WOLAgentLauncher extends SSHLauncher {
 
@@ -256,6 +262,13 @@ public class WOLAgentLauncher extends SSHLauncher {
             return errorMessage == null
                     ? FormValidation.ok()
                     : FormValidation.error(errorMessage);
+        }
+
+        public List<Descriptor<ComputerLauncher>> getComputerLauncherDescriptors() {
+            return Functions.getComputerLauncherDescriptors()
+                    .stream()
+                    .filter(descriptor -> !DescriptorImpl.class.isAssignableFrom(descriptor.getClass()))
+                    .collect(Collectors.toList());
         }
 
     }
