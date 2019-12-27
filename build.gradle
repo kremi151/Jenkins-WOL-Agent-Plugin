@@ -14,7 +14,7 @@ description "A description of your plugin"
 
 jenkinsPlugin {
     coreVersion = "2.190.3"                                             // Version of Jenkins core this plugin depends on.
-    displayName = "Wake on LAN agent plugin for Jenkins"                // Human-readable name of plugin.
+    displayName = "Wake on LAN slave plugin for Jenkins"                // Human-readable name of plugin.
     url = "http://wiki.jenkins-ci.org/display/JENKINS/SomePluginPage"   // URL for plugin on Jenkins wiki or elsewhere.
     gitHubUrl = "https://github.com/jenkinsci/some-plugin"              // Plugin URL on GitHub. Optional.
     shortName = "wol-agent-plugin"                                      // Plugin ID, defaults to the project name without trailing '-plugin'
@@ -32,5 +32,5 @@ jenkinsPlugin {
 dependencies {
     compileOnly group: 'org.jenkins-ci', name: 'trilead-ssh2', version: 'build-217-jenkins-11'
 
-    jenkinsPlugins group: 'org.jenkins-ci.plugins', name: 'ssh-slaves', version: '1.31.0', ext: 'jar'
+    // jenkinsPlugins group: 'org.jenkins-ci.plugins', name: 'ssh-slaves', version: '1.31.0', ext: 'jar'
 }
