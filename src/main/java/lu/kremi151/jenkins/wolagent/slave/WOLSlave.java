@@ -20,6 +20,7 @@ import hudson.Extension;
 import hudson.Functions;
 import hudson.model.Slave;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.JNLPLauncher;
 import hudson.util.FormValidation;
 import lu.kremi151.jenkins.wolagent.Messages;
 import lu.kremi151.jenkins.wolagent.launcher.WOLLauncher;
@@ -33,9 +34,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public final class WOLSlave extends Slave {
+
+    private static final Logger LOGGER = java.util.logging.Logger.getLogger(WOLSlave.class.getName());
 
     private final transient WOLLauncher wolLauncher;
 
@@ -44,6 +49,7 @@ public final class WOLSlave extends Slave {
             @Nonnull String name,
             String remoteFS,
             ComputerLauncher launcher,
+            ComputerLauncher delegateLauncher,
             String macAddress,
             int pingInterval,
             int connectionTimeout,
@@ -53,11 +59,15 @@ public final class WOLSlave extends Slave {
     ) throws Descriptor.FormException, IOException {
         super(name, remoteFS, launcher);
         // Unpack WOLLauncher until we reach the base delegate launcher
+        if (delegateLauncher != null) {
+            launcher = delegateLauncher;
+        }
         while (launcher != null && launcher.getClass() == WOLLauncher.class) {
             launcher = ((WOLLauncher) launcher).getLauncher();
         }
+        LOGGER.log(Level.INFO, "Construct delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
         this.wolLauncher = new WOLLauncher(
-                launcher,
+                ensureNotNullWithDefault(launcher),
                 macAddress,
                 pingInterval,
                 connectionTimeout,
@@ -69,6 +79,14 @@ public final class WOLSlave extends Slave {
 
     public ComputerLauncher getDelegateLauncher() {
         return wolLauncher.getLauncher();
+    }
+
+    @DataBoundSetter
+    public void setDelegateLauncher(ComputerLauncher launcher) {
+        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
+            launcher = ((WOLLauncher) launcher).getLauncher();
+        }
+        wolLauncher.setLauncher(launcher);
     }
 
     @Override
@@ -83,7 +101,8 @@ public final class WOLSlave extends Slave {
         while (launcher != null && launcher.getClass() == WOLLauncher.class) {
             launcher = ((WOLLauncher) launcher).getLauncher();
         }
-        wolLauncher.setLauncher(launcher);
+        LOGGER.log(Level.INFO, "Set delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
+        wolLauncher.setLauncher(ensureNotNullWithDefault(launcher));
     }
 
     @DataBoundSetter
@@ -138,6 +157,14 @@ public final class WOLSlave extends Slave {
 
     public int getConnectionTimeout() {
         return wolLauncher.getConnectionTimeout();
+    }
+
+    private static ComputerLauncher ensureNotNullWithDefault(@Nullable ComputerLauncher launcher) {
+        if (launcher != null) {
+            return launcher;
+        }
+        // This is the most simply launcher to configure, so we use it as a fallback
+        return new JNLPLauncher(false);
     }
 
     @Extension
