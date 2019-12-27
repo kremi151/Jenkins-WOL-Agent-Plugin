@@ -44,7 +44,7 @@ public final class WOLSlave extends Slave {
 
     private static final Logger LOGGER = java.util.logging.Logger.getLogger(WOLSlave.class.getName());
 
-    private final transient WOLLauncher wolLauncher;
+    private transient WOLLauncher wolLauncher;
 
     private String macAddress;
 
@@ -68,26 +68,35 @@ public final class WOLSlave extends Slave {
             boolean ignoreSessionsOnSuspend
     ) throws Descriptor.FormException, IOException {
         super(name, remoteFS, ensureNotNullWithDefault(launcher));
-        // Unpack WOLLauncher until we reach the base delegate launcher
-        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
-            launcher = ((WOLLauncher) launcher).getLauncher();
-        }
-        LOGGER.log(Level.INFO, "Construct delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
-        this.wolLauncher = new WOLLauncher(
-                ensureNotNullWithDefault(launcher),
-                macAddress,
-                pingInterval,
-                connectionTimeout,
-                autoSuspend,
-                suspendAsSuperuser,
-                ignoreSessionsOnSuspend
-        );
         this.macAddress = macAddress;
         this.pingInterval = pingInterval;
         this.connectionTimeout = connectionTimeout;
         this.autoSuspend = autoSuspend;
         this.suspendAsSuperuser = suspendAsSuperuser;
         this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
+
+        // Unpack WOLLauncher until we reach the base delegate launcher
+        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
+            launcher = ((WOLLauncher) launcher).getLauncher();
+        }
+        LOGGER.log(Level.INFO, "Construct delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
+        this.getWolLauncher(launcher).setLauncher(launcher);
+    }
+
+    private WOLLauncher getWolLauncher(@Nullable ComputerLauncher launcher) {
+        if (this.wolLauncher == null) {
+            LOGGER.log(Level.INFO, "Init delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
+            this.wolLauncher = new WOLLauncher(
+                    ensureNotNullWithDefault(launcher),
+                    macAddress,
+                    pingInterval,
+                    connectionTimeout,
+                    autoSuspend,
+                    suspendAsSuperuser,
+                    ignoreSessionsOnSuspend
+            );
+        }
+        return this.wolLauncher;
     }
 
     @Override
@@ -97,16 +106,12 @@ public final class WOLSlave extends Slave {
     }
 
     public ComputerLauncher getDelegateLauncher() {
-        if (wolLauncher == null) {
-            // Might happen during Jenkins startup
-            return null;
-        }
-        return wolLauncher.getLauncher();
+        return getWolLauncher(null).getLauncher();
     }
 
     @Override
     public ComputerLauncher getLauncher() {
-        return wolLauncher;
+        return getWolLauncher(null);
     }
 
     @Override
@@ -118,13 +123,13 @@ public final class WOLSlave extends Slave {
             launcher = ((WOLLauncher) launcher).getLauncher();
         }
         LOGGER.log(Level.INFO, "Set delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
-        wolLauncher.setLauncher(ensureNotNullWithDefault(launcher));
+        getWolLauncher(launcher).setLauncher(ensureNotNullWithDefault(launcher));
     }
 
     @DataBoundSetter
     public void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
-        this.wolLauncher.setMacAddress(macAddress);
+        this.getWolLauncher(null).setMacAddress(macAddress);
     }
 
     public String getMacAddress() {
@@ -134,7 +139,7 @@ public final class WOLSlave extends Slave {
     @DataBoundSetter
     public void setAutoSuspend(boolean autoSuspend) {
         this.autoSuspend = autoSuspend;
-        this.wolLauncher.setAutoSuspend(autoSuspend);
+        this.getWolLauncher(null).setAutoSuspend(autoSuspend);
     }
 
     public boolean isAutoSuspend() {
@@ -144,7 +149,7 @@ public final class WOLSlave extends Slave {
     @DataBoundSetter
     public void setSuspendAsSuperuser(boolean suspendAsSuperuser) {
         this.suspendAsSuperuser = suspendAsSuperuser;
-        this.wolLauncher.setSuspendAsSuperuser(suspendAsSuperuser);
+        this.getWolLauncher(null).setSuspendAsSuperuser(suspendAsSuperuser);
     }
 
     public boolean isSuspendAsSuperuser() {
@@ -154,7 +159,7 @@ public final class WOLSlave extends Slave {
     @DataBoundSetter
     public void setIgnoreSessionsOnSuspend(boolean ignoreSessionsOnSuspend) {
         this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
-        this.wolLauncher.setIgnoreSessionsOnSuspend(ignoreSessionsOnSuspend);
+        this.getWolLauncher(null).setIgnoreSessionsOnSuspend(ignoreSessionsOnSuspend);
     }
 
     public boolean isIgnoreSessionsOnSuspend() {
@@ -164,7 +169,7 @@ public final class WOLSlave extends Slave {
     @DataBoundSetter
     public void setPingInterval(int pingInterval) {
         this.pingInterval = pingInterval;
-        this.wolLauncher.setPingInterval(pingInterval);
+        this.getWolLauncher(null).setPingInterval(pingInterval);
     }
 
     public int getPingInterval() {
@@ -174,7 +179,7 @@ public final class WOLSlave extends Slave {
     @DataBoundSetter
     public void setConnectionTimeout(int connectionTimeout) {
         this.connectionTimeout = connectionTimeout;
-        this.wolLauncher.setConnectionTimeout(connectionTimeout);
+        this.getWolLauncher(null).setConnectionTimeout(connectionTimeout);
     }
 
     public int getConnectionTimeout() {
