@@ -35,9 +35,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class WOLSlave extends Slave {
+public final class WOLSlave extends Slave {
 
-    private transient final WOLLauncher wolLauncher;
+    private final transient WOLLauncher wolLauncher;
 
     @DataBoundConstructor
     public WOLSlave(
@@ -52,6 +52,10 @@ public class WOLSlave extends Slave {
             boolean ignoreSessionsOnSuspend
     ) throws Descriptor.FormException, IOException {
         super(name, remoteFS, launcher);
+        // Unpack WOLLauncher until we reach the base delegate launcher
+        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
+            launcher = ((WOLLauncher) launcher).getLauncher();
+        }
         this.wolLauncher = new WOLLauncher(
                 launcher,
                 macAddress,
@@ -75,6 +79,10 @@ public class WOLSlave extends Slave {
     @Override
     public void setLauncher(ComputerLauncher launcher) {
         super.setLauncher(launcher);
+        // Unpack WOLLauncher until we reach the base delegate launcher
+        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
+            launcher = ((WOLLauncher) launcher).getLauncher();
+        }
         wolLauncher.setLauncher(launcher);
     }
 
