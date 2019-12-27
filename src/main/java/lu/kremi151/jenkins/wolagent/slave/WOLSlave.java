@@ -18,9 +18,11 @@ package lu.kremi151.jenkins.wolagent.slave;
 
 import hudson.Extension;
 import hudson.Functions;
+import hudson.model.Computer;
 import hudson.model.Slave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
+import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
 import lu.kremi151.jenkins.wolagent.Messages;
 import lu.kremi151.jenkins.wolagent.launcher.WOLLauncher;
@@ -58,7 +60,6 @@ public final class WOLSlave extends Slave {
             @Nonnull String name,
             String remoteFS,
             ComputerLauncher launcher,
-            ComputerLauncher delegateLauncher,
             String macAddress,
             int pingInterval,
             int connectionTimeout,
@@ -66,11 +67,8 @@ public final class WOLSlave extends Slave {
             boolean suspendAsSuperuser,
             boolean ignoreSessionsOnSuspend
     ) throws Descriptor.FormException, IOException {
-        super(name, remoteFS, launcher);
+        super(name, remoteFS, ensureNotNullWithDefault(launcher));
         // Unpack WOLLauncher until we reach the base delegate launcher
-        if (delegateLauncher != null) {
-            launcher = delegateLauncher;
-        }
         while (launcher != null && launcher.getClass() == WOLLauncher.class) {
             launcher = ((WOLLauncher) launcher).getLauncher();
         }
@@ -92,16 +90,18 @@ public final class WOLSlave extends Slave {
         this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
     }
 
-    public ComputerLauncher getDelegateLauncher() {
-        return wolLauncher.getLauncher();
+    @Override
+    public Computer createComputer() {
+        LOGGER.log(Level.INFO, "Create WOLSlave computer with name {0} and type {1}", new Object[]{name, getDelegateLauncher()});
+        return super.createComputer();
     }
 
-    @DataBoundSetter
-    public void setDelegateLauncher(ComputerLauncher launcher) {
-        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
-            launcher = ((WOLLauncher) launcher).getLauncher();
+    public ComputerLauncher getDelegateLauncher() {
+        if (wolLauncher == null) {
+            // Might happen during Jenkins startup
+            return null;
         }
-        wolLauncher.setLauncher(launcher);
+        return wolLauncher.getLauncher();
     }
 
     @Override
@@ -110,6 +110,7 @@ public final class WOLSlave extends Slave {
     }
 
     @Override
+    @DataBoundSetter
     public void setLauncher(ComputerLauncher launcher) {
         super.setLauncher(launcher);
         // Unpack WOLLauncher until we reach the base delegate launcher
@@ -243,6 +244,10 @@ public final class WOLSlave extends Slave {
                     .stream()
                     .filter(descriptor -> !WOLLauncher.DescriptorImpl.class.isAssignableFrom(descriptor.getClass()))
                     .collect(Collectors.toList());
+        }
+
+        public List<hudson.model.Descriptor<RetentionStrategy<?>>> getRetentionStrategyDescriptors() {
+            return Functions.getRetentionStrategyDescriptors();
         }
 
     }
