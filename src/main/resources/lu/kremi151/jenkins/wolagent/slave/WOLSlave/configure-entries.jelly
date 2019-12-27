@@ -66,6 +66,12 @@ limitations under the License.
     descriptors="${descriptor.getComputerLauncherDescriptors()}"
   />
 
+  <f:dropdownDescriptorSelector
+    title="${%RetentionStrategy}"
+    field="retentionStrategy"
+    descriptors="${descriptor.getRetentionStrategyDescriptors()}"
+  />
+
   <f:descriptorList
     title="${%NodeProperties}"
     descriptors="${h.getNodePropertyDescriptors(descriptor.clazz)}"
