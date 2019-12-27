@@ -219,7 +219,7 @@ public class WOLAgentLauncher extends SSHLauncher {
 
         @Override
         public String getDisplayName() {
-            return Messages.WOLLauncher_AgentDescription();
+            return Messages.WOLAgent_AgentDescription();
         }
 
         public FormValidation doCheckMacAddress(@QueryParameter String macAddress) {
@@ -246,13 +246,13 @@ public class WOLAgentLauncher extends SSHLauncher {
         public FormValidation doCheckPingInterval(@QueryParameter String pingInterval) {
             return isPositiveNonDecimalNonZeroInt(pingInterval)
                     ? FormValidation.ok()
-                    : FormValidation.error(Messages.WOLLauncher_ExpectedPositiveInteger());
+                    : FormValidation.error(Messages.WOLAgent_ExpectedPositiveInteger());
         }
 
         public FormValidation doCheckConnectionTimeout(@QueryParameter String connectionTimeout) {
             return isPositiveNonDecimalNonZeroInt(connectionTimeout)
                     ? FormValidation.ok()
-                    : FormValidation.error(Messages.WOLLauncher_ExpectedPositiveInteger());
+                    : FormValidation.error(Messages.WOLAgent_ExpectedPositiveInteger());
         }
 
     }
