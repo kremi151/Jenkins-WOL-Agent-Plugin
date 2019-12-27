@@ -16,7 +16,6 @@
 
 package lu.kremi151.jenkins.wolagent.launcher;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.model.TaskListener;
 import lu.kremi151.jenkins.wolagent.Messages;
@@ -30,6 +29,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -49,7 +49,7 @@ public class WOLAgentLauncher extends SSHLauncher {
     private int connectionTimeout = 60000;
 
     public WOLAgentLauncher(
-            @NonNull String host,
+            String host,
             int port,
             String credentialsId,
             String macAddress,
@@ -74,7 +74,7 @@ public class WOLAgentLauncher extends SSHLauncher {
 
     @DataBoundConstructor
     public WOLAgentLauncher(
-            @NonNull String host,
+            String host,
             int port,
             String credentialsId,
             String macAddress,
@@ -228,31 +228,34 @@ public class WOLAgentLauncher extends SSHLauncher {
                     : FormValidation.error(hudson.plugins.sshslaves.Messages.SSHLauncher_HostNotSpecified());
         }
 
-        private boolean isPositiveNonDecimalNonZeroInt(String str) {
+        @Nullable
+        private String validatePositiveIntegerInput(String str) {
             if (StringUtils.isBlank(str) || !str.matches("^[0-9]+$")) {
-                return false;
+                return Messages.WOLAgent_InputMustBeInteger();
             }
             try {
                 int number = Integer.parseInt(str);
                 if (number <= 0) {
-                    return false;
+                    return Messages.WOLAgent_InputNumberMustBeStrictlyPositive();
                 }
             } catch (NumberFormatException e) {
-                return false;
+                return Messages.WOLAgent_InputMustBeInteger();
             }
-            return true;
+            return null;
         }
 
         public FormValidation doCheckPingInterval(@QueryParameter String pingInterval) {
-            return isPositiveNonDecimalNonZeroInt(pingInterval)
+            String errorMessage = validatePositiveIntegerInput(pingInterval);
+            return errorMessage == null
                     ? FormValidation.ok()
-                    : FormValidation.error(Messages.WOLAgent_ExpectedPositiveInteger());
+                    : FormValidation.error(errorMessage);
         }
 
         public FormValidation doCheckConnectionTimeout(@QueryParameter String connectionTimeout) {
-            return isPositiveNonDecimalNonZeroInt(connectionTimeout)
+            String errorMessage = validatePositiveIntegerInput(connectionTimeout);
+            return errorMessage == null
                     ? FormValidation.ok()
-                    : FormValidation.error(Messages.WOLAgent_ExpectedPositiveInteger());
+                    : FormValidation.error(errorMessage);
         }
 
     }
