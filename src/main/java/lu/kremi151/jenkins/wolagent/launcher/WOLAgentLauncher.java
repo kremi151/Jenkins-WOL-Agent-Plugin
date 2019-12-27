@@ -228,14 +228,29 @@ public class WOLAgentLauncher extends SSHLauncher {
                     : FormValidation.error(Messages.SSHLauncher_HostNotSpecified());
         }
 
+        private boolean isPositiveNonDecimalNonZeroInt(String str) {
+            if (StringUtils.isBlank(str) || !str.matches("^[0-9]+$")) {
+                return false;
+            }
+            try {
+                int number = Integer.parseInt(str);
+                if (number <= 0) {
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                return false;
+            }
+            return true;
+        }
+
         public FormValidation doCheckPingInterval(@QueryParameter String pingInterval) {
-            return (StringUtils.isNotBlank(pingInterval) && pingInterval.matches("^[0-9]+$"))
+            return isPositiveNonDecimalNonZeroInt(pingInterval)
                     ? FormValidation.ok()
                     : FormValidation.error("Expected a non-decimal number");
         }
 
         public FormValidation doCheckConnectionTimeout(@QueryParameter String connectionTimeout) {
-            return (StringUtils.isNotBlank(connectionTimeout) && connectionTimeout.matches("^[0-9]+$"))
+            return isPositiveNonDecimalNonZeroInt(connectionTimeout)
                     ? FormValidation.ok()
                     : FormValidation.error("Expected a non-decimal number");
         }

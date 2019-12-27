@@ -8,10 +8,10 @@
     <f:textbox/>
   </f:entry>
   <f:entry title="${%PingInterval}" field="pingInterval">
-    <f:textbox/>
+    <f:number default="2000"/>
   </f:entry>
   <f:entry title="${%ConnectionTimeout}" field="connectionTimeout">
-    <f:textbox/>
+    <f:number default="60000"/>
   </f:entry>
   <f:entry title="${%AutoSuspend}" field="autoSuspend">
     <f:checkbox/>
