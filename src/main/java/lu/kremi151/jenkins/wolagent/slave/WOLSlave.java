@@ -64,6 +64,10 @@ public class WOLSlave extends Slave {
         this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
     }
 
+    public ComputerLauncher getDelegateLauncher() {
+        return wolLauncher.getLauncher();
+    }
+
     @Override
     public ComputerLauncher getLauncher() {
         return wolLauncher;
@@ -181,7 +185,7 @@ public class WOLSlave extends Slave {
         public List<hudson.model.Descriptor<ComputerLauncher>> getComputerLauncherDescriptors() {
             return Functions.getComputerLauncherDescriptors()
                     .stream()
-                    .filter(descriptor -> !WOLLauncher.DESCRIPTOR.getClass().isAssignableFrom(descriptor.getClass()))
+                    //.filter(descriptor -> !WOLLauncher.DESCRIPTOR.getClass().isAssignableFrom(descriptor.getClass()))
                     .collect(Collectors.toList());
         }
 

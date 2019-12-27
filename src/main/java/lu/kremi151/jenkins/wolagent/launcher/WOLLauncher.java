@@ -111,15 +111,4 @@ public class WOLLauncher extends DelegatingComputerLauncher {
         super.beforeDisconnect(computer, listener);
     }
 
-    @Extension
-    public static final Descriptor<ComputerLauncher> DESCRIPTOR = new Descriptor<ComputerLauncher>() {
-
-        @Override
-        public String getDisplayName() {
-            // Hide this launcher from the user
-            return null;
-        }
-
-    };
-
 }
