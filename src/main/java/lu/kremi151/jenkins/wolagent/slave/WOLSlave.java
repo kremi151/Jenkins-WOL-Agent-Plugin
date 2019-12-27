@@ -145,21 +145,21 @@ public class WOLSlave extends Slave {
         public FormValidation doCheckMacAddress(@QueryParameter String macAddress) {
             return (StringUtils.isNotBlank(macAddress) && macAddress.matches("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"))
                     ? FormValidation.ok()
-                    : FormValidation.error(hudson.plugins.sshslaves.Messages.SSHLauncher_HostNotSpecified());
+                    : FormValidation.error(Messages.WOLSlave_InvalidMACAddress());
         }
 
         @Nullable
         private String validatePositiveIntegerInput(String str) {
             if (StringUtils.isBlank(str) || !str.matches("^[0-9]+$")) {
-                return Messages.WOLAgent_InputMustBeInteger();
+                return Messages.WOLSlave_InputMustBeInteger();
             }
             try {
                 int number = Integer.parseInt(str);
                 if (number <= 0) {
-                    return Messages.WOLAgent_InputNumberMustBeStrictlyPositive();
+                    return Messages.WOLSlave_InputNumberMustBeStrictlyPositive();
                 }
             } catch (NumberFormatException e) {
-                return Messages.WOLAgent_InputMustBeInteger();
+                return Messages.WOLSlave_InputMustBeInteger();
             }
             return null;
         }
