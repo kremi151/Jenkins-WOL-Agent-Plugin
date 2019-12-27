@@ -187,19 +187,15 @@ public class WOLLauncher extends DelegatingComputerLauncher {
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<ComputerLauncher> {
+    public static final class DescriptorImpl extends Descriptor<ComputerLauncher> {
+
+        public DescriptorImpl() {
+            super(WOLLauncher.class);
+        }
 
         @Override
         public String getDisplayName() {
             return null;
-        }
-
-        public boolean isApplicable(Class<?> targetType) {
-            return false;
-        }
-
-        public boolean isApplicable() {
-            return false;
         }
 
     }
