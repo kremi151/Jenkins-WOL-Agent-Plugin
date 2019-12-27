@@ -72,6 +72,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
 
     @DataBoundSetter
     public void setLauncher(ComputerLauncher launcher) {
+        LOGGER.log(Level.INFO, "Set delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
         this.launcher = launcher;
     }
 
