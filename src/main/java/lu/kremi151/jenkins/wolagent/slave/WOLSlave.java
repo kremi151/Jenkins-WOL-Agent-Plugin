@@ -37,14 +37,7 @@ import java.util.stream.Collectors;
 
 public class WOLSlave extends Slave {
 
-    private final WOLLauncher wolLauncher;
-
-    private String macAddress;
-    private boolean autoSuspend;
-    private boolean suspendAsSuperuser;
-    private boolean ignoreSessionsOnSuspend;
-    private int pingInterval = 2000;
-    private int connectionTimeout = 60000;
+    private transient final WOLLauncher wolLauncher;
 
     @DataBoundConstructor
     public WOLSlave(
@@ -52,16 +45,22 @@ public class WOLSlave extends Slave {
             String remoteFS,
             ComputerLauncher launcher,
             String macAddress,
+            int pingInterval,
+            int connectionTimeout,
             boolean autoSuspend,
             boolean suspendAsSuperuser,
             boolean ignoreSessionsOnSuspend
     ) throws Descriptor.FormException, IOException {
         super(name, remoteFS, launcher);
-        this.wolLauncher = new WOLLauncher(launcher, this);
-        this.macAddress = macAddress;
-        this.autoSuspend = autoSuspend;
-        this.suspendAsSuperuser = suspendAsSuperuser;
-        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
+        this.wolLauncher = new WOLLauncher(
+                launcher,
+                macAddress,
+                pingInterval,
+                connectionTimeout,
+                autoSuspend,
+                suspendAsSuperuser,
+                ignoreSessionsOnSuspend
+        );
     }
 
     public ComputerLauncher getDelegateLauncher() {
@@ -78,58 +77,59 @@ public class WOLSlave extends Slave {
         super.setLauncher(launcher);
         wolLauncher.setLauncher(launcher);
     }
+
     @DataBoundSetter
     public void setMacAddress(String macAddress) {
-        this.macAddress = macAddress;
+        this.wolLauncher.setMacAddress(macAddress);
     }
 
     public String getMacAddress() {
-        return this.macAddress;
+        return this.wolLauncher.getMacAddress();
     }
 
     @DataBoundSetter
     public void setAutoSuspend(boolean autoSuspend) {
-        this.autoSuspend = autoSuspend;
+        this.wolLauncher.setAutoSuspend(autoSuspend);
     }
 
     public boolean isAutoSuspend() {
-        return this.autoSuspend;
+        return this.wolLauncher.isAutoSuspend();
     }
 
     @DataBoundSetter
     public void setSuspendAsSuperuser(boolean suspendAsSuperuser) {
-        this.suspendAsSuperuser = suspendAsSuperuser;
+        this.wolLauncher.setSuspendAsSuperuser(suspendAsSuperuser);
     }
 
     public boolean isSuspendAsSuperuser() {
-        return suspendAsSuperuser;
+        return wolLauncher.isSuspendAsSuperuser();
     }
 
     @DataBoundSetter
     public void setIgnoreSessionsOnSuspend(boolean ignoreSessionsOnSuspend) {
-        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
+        this.wolLauncher.setIgnoreSessionsOnSuspend(ignoreSessionsOnSuspend);
     }
 
     public boolean isIgnoreSessionsOnSuspend() {
-        return ignoreSessionsOnSuspend;
+        return wolLauncher.isIgnoreSessionsOnSuspend();
     }
 
     @DataBoundSetter
     public void setPingInterval(int pingInterval) {
-        this.pingInterval = pingInterval;
+        this.wolLauncher.setPingInterval(pingInterval);
     }
 
     public int getPingInterval() {
-        return pingInterval;
+        return wolLauncher.getPingInterval();
     }
 
     @DataBoundSetter
     public void setConnectionTimeout(int connectionTimeout) {
-        this.connectionTimeout = connectionTimeout;
+        this.wolLauncher.setConnectionTimeout(connectionTimeout);
     }
 
     public int getConnectionTimeout() {
-        return connectionTimeout;
+        return wolLauncher.getConnectionTimeout();
     }
 
     @Extension
@@ -185,7 +185,7 @@ public class WOLSlave extends Slave {
         public List<hudson.model.Descriptor<ComputerLauncher>> getComputerLauncherDescriptors() {
             return Functions.getComputerLauncherDescriptors()
                     .stream()
-                    //.filter(descriptor -> !WOLLauncher.DESCRIPTOR.getClass().isAssignableFrom(descriptor.getClass()))
+                    .filter(descriptor -> !WOLLauncher.DescriptorImpl.class.isAssignableFrom(descriptor.getClass()))
                     .collect(Collectors.toList());
         }
 

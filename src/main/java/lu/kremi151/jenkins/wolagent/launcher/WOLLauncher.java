@@ -25,7 +25,8 @@ import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.SlaveComputer;
 import jline.internal.Nullable;
 import lu.kremi151.jenkins.wolagent.remoting.callables.Suspend;
-import lu.kremi151.jenkins.wolagent.slave.WOLSlave;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -37,13 +38,39 @@ public class WOLLauncher extends DelegatingComputerLauncher {
 
     private static final Logger LOGGER = java.util.logging.Logger.getLogger(WOLLauncher.class.getName());
 
-    private final WOLSlave wolSlave;
+    private transient String macAddress;
 
-    public WOLLauncher(ComputerLauncher launcher, WOLSlave wolSlave) {
+    private transient int pingInterval;
+    private transient int connectionTimeout;
+
+    private transient boolean autoSuspend;
+    private transient boolean suspendAsSuperuser;
+    private transient boolean ignoreSessionsOnSuspend;
+
+    @DataBoundConstructor
+    public WOLLauncher(ComputerLauncher launcher) {
         super(launcher);
-        this.wolSlave = wolSlave;
     }
 
+    public WOLLauncher(
+            ComputerLauncher launcher,
+            String macAddress,
+            int pingInterval,
+            int connectionTimeout,
+            boolean autoSuspend,
+            boolean suspendAsSuperuser,
+            boolean ignoreSessionsOnSuspend
+    ) {
+        this(launcher);
+        this.macAddress = macAddress;
+        this.pingInterval = pingInterval;
+        this.connectionTimeout = connectionTimeout;
+        this.autoSuspend = autoSuspend;
+        this.suspendAsSuperuser = suspendAsSuperuser;
+        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
+    }
+
+    @DataBoundSetter
     public void setLauncher(ComputerLauncher launcher) {
         this.launcher = launcher;
     }
@@ -61,14 +88,14 @@ public class WOLLauncher extends DelegatingComputerLauncher {
             final Future future = executorService.submit(() -> {
                 while (true) {
                     try {
-                        if (address.isReachable(wolSlave.getPingInterval())) {
+                        if (address.isReachable(pingInterval)) {
                             break;
                         }
-                        Thread.sleep((long) wolSlave.getPingInterval());
+                        Thread.sleep((long) pingInterval);
                     } catch (IOException | InterruptedException e) {}
                 }
             });
-            future.get(wolSlave.getConnectionTimeout(), TimeUnit.MILLISECONDS);
+            future.get(connectionTimeout, TimeUnit.MILLISECONDS);
         } catch (ExecutionException | TimeoutException e) {
             throw new RuntimeException(e);
         } finally {
@@ -80,7 +107,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
 
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        Process process = Runtime.getRuntime().exec("etherwake " + wolSlave.getMacAddress());
+        Process process = Runtime.getRuntime().exec("etherwake " + macAddress);
         process.waitFor(5L, TimeUnit.SECONDS);
 
         //TODO: Find a way to ping the host
@@ -90,7 +117,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
     }
 
     private void trySuspend(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        if (!wolSlave.isAutoSuspend()) {
+        if (!autoSuspend) {
             return;
         }
         final Channel channel = computer.getChannel();
@@ -98,7 +125,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
             listener.error("Cannot send suspend command, channel is null");
             return;
         }
-        channel.call(new Suspend(wolSlave.isSuspendAsSuperuser(), wolSlave.isIgnoreSessionsOnSuspend()));
+        channel.call(new Suspend(suspendAsSuperuser, ignoreSessionsOnSuspend));
     }
 
     @Override
@@ -111,4 +138,69 @@ public class WOLLauncher extends DelegatingComputerLauncher {
         super.beforeDisconnect(computer, listener);
     }
 
+    public boolean isAutoSuspend() {
+        return autoSuspend;
+    }
+
+    public void setAutoSuspend(boolean autoSuspend) {
+        this.autoSuspend = autoSuspend;
+    }
+
+    public boolean isSuspendAsSuperuser() {
+        return suspendAsSuperuser;
+    }
+
+    public void setSuspendAsSuperuser(boolean suspendAsSuperuser) {
+        this.suspendAsSuperuser = suspendAsSuperuser;
+    }
+
+    public boolean isIgnoreSessionsOnSuspend() {
+        return ignoreSessionsOnSuspend;
+    }
+
+    public void setIgnoreSessionsOnSuspend(boolean ignoreSessionsOnSuspend) {
+        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
+    }
+
+    public int getPingInterval() {
+        return pingInterval;
+    }
+
+    public void setPingInterval(int pingInterval) {
+        this.pingInterval = pingInterval;
+    }
+
+    public int getConnectionTimeout() {
+        return connectionTimeout;
+    }
+
+    public void setConnectionTimeout(int connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
+    }
+
+    @Extension
+    public static class DescriptorImpl extends Descriptor<ComputerLauncher> {
+
+        @Override
+        public String getDisplayName() {
+            return null;
+        }
+
+        public boolean isApplicable(Class<?> targetType) {
+            return false;
+        }
+
+        public boolean isApplicable() {
+            return false;
+        }
+
+    }
 }
