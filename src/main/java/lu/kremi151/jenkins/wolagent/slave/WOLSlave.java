@@ -35,18 +35,19 @@ import org.kohsuke.stapler.QueryParameter;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-public final class WOLSlave extends Slave {
+public final class WOLSlave extends Slave implements Serializable {
 
     private static final Logger LOGGER = java.util.logging.Logger.getLogger(WOLSlave.class.getName());
 
-    private transient WOLLauncher wolLauncher;
-
     private String macAddress;
+
+    private ComputerLauncher launcher;
 
     private int pingInterval;
     private int connectionTimeout;
@@ -67,7 +68,7 @@ public final class WOLSlave extends Slave {
             boolean suspendAsSuperuser,
             boolean ignoreSessionsOnSuspend
     ) throws Descriptor.FormException, IOException {
-        super(name, remoteFS, ensureNotNullWithDefault(launcher));
+        super(name, remoteFS, null);
         this.macAddress = macAddress;
         this.pingInterval = pingInterval;
         this.connectionTimeout = connectionTimeout;
@@ -75,62 +76,30 @@ public final class WOLSlave extends Slave {
         this.suspendAsSuperuser = suspendAsSuperuser;
         this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
 
-        // Unpack WOLLauncher until we reach the base delegate launcher
-        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
-            launcher = ((WOLLauncher) launcher).getLauncher();
-        }
+        launcher = unpackLauncher(launcher);
         LOGGER.log(Level.INFO, "Construct delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
-        this.getWolLauncher(launcher).setLauncher(launcher);
-    }
-
-    private WOLLauncher getWolLauncher(@Nullable ComputerLauncher launcher) {
-        if (this.wolLauncher == null) {
-            LOGGER.log(Level.INFO, "Init delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
-            this.wolLauncher = new WOLLauncher(
-                    ensureNotNullWithDefault(launcher),
-                    macAddress,
-                    pingInterval,
-                    connectionTimeout,
-                    autoSuspend,
-                    suspendAsSuperuser,
-                    ignoreSessionsOnSuspend
-            );
-        }
-        return this.wolLauncher;
-    }
-
-    @Override
-    public Computer createComputer() {
-        LOGGER.log(Level.INFO, "Create WOLSlave computer with name {0} and type {1}", new Object[]{name, getDelegateLauncher()});
-        return super.createComputer();
-    }
-
-    public ComputerLauncher getDelegateLauncher() {
-        return getWolLauncher(null).getLauncher();
+        this.launcher = ensureNotNullWithDefault(launcher);
     }
 
     @Override
     public ComputerLauncher getLauncher() {
-        LOGGER.log(Level.INFO, "Get delegate launcher");
-        return getWolLauncher(null);
+        LOGGER.log(Level.INFO, "Get launcher");
+        ComputerLauncher launcher = unpackLauncher(this.launcher);
+        return ensureNotNullWithDefault(launcher);
     }
 
     @Override
     @DataBoundSetter
     public void setLauncher(ComputerLauncher launcher) {
-        // Unpack WOLLauncher until we reach the base delegate launcher
-        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
-            launcher = ((WOLLauncher) launcher).getLauncher();
-        }
-        LOGGER.log(Level.INFO, "Set delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
-        getWolLauncher(launcher).setLauncher(ensureNotNullWithDefault(launcher));
+        launcher = unpackLauncher(launcher);
+        LOGGER.log(Level.INFO, "Set launcher of type " + (launcher == null ? "null" : launcher.getClass()));
+        this.launcher = ensureNotNullWithDefault(launcher);
     }
 
     @DataBoundSetter
     public void setMacAddress(String macAddress) {
         LOGGER.log(Level.INFO, "Set mac address to {0}", macAddress);
         this.macAddress = macAddress;
-        this.getWolLauncher(null).setMacAddress(macAddress);
     }
 
     public String getMacAddress() {
@@ -141,7 +110,6 @@ public final class WOLSlave extends Slave {
     public void setAutoSuspend(boolean autoSuspend) {
         LOGGER.log(Level.INFO, "Set auto suspend to {0}", autoSuspend);
         this.autoSuspend = autoSuspend;
-        this.getWolLauncher(null).setAutoSuspend(autoSuspend);
     }
 
     public boolean isAutoSuspend() {
@@ -152,7 +120,6 @@ public final class WOLSlave extends Slave {
     public void setSuspendAsSuperuser(boolean suspendAsSuperuser) {
         LOGGER.log(Level.INFO, "Set suspend as superuser to {0}", suspendAsSuperuser);
         this.suspendAsSuperuser = suspendAsSuperuser;
-        this.getWolLauncher(null).setSuspendAsSuperuser(suspendAsSuperuser);
     }
 
     public boolean isSuspendAsSuperuser() {
@@ -162,7 +129,6 @@ public final class WOLSlave extends Slave {
     @DataBoundSetter
     public void setIgnoreSessionsOnSuspend(boolean ignoreSessionsOnSuspend) {
         this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
-        this.getWolLauncher(null).setIgnoreSessionsOnSuspend(ignoreSessionsOnSuspend);
     }
 
     public boolean isIgnoreSessionsOnSuspend() {
@@ -173,7 +139,6 @@ public final class WOLSlave extends Slave {
     public void setPingInterval(int pingInterval) {
         LOGGER.log(Level.INFO, "Set ping interval to {0}", pingInterval);
         this.pingInterval = pingInterval;
-        this.getWolLauncher(null).setPingInterval(pingInterval);
     }
 
     public int getPingInterval() {
@@ -184,19 +149,35 @@ public final class WOLSlave extends Slave {
     public void setConnectionTimeout(int connectionTimeout) {
         LOGGER.log(Level.INFO, "Set connection timeout to {0}", connectionTimeout);
         this.connectionTimeout = connectionTimeout;
-        this.getWolLauncher(null).setConnectionTimeout(connectionTimeout);
     }
 
     public int getConnectionTimeout() {
         return connectionTimeout;
     }
 
-    private static ComputerLauncher ensureNotNullWithDefault(@Nullable ComputerLauncher launcher) {
+    static ComputerLauncher ensureNotNullWithDefault(@Nullable ComputerLauncher launcher) {
         if (launcher != null) {
             return launcher;
         }
         // This is the most simply launcher to configure, so we use it as a fallback
         return new JNLPLauncher(false);
+    }
+
+    @Nullable
+    private static ComputerLauncher unpackLauncher(@Nullable ComputerLauncher launcher) {
+        // Unpack WOLLauncher until we reach the base delegate launcher
+        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
+            LOGGER.log(Level.WARNING, "Got launcher of type {0}, unpacking it", launcher.getClass().getName());
+            launcher = ((WOLLauncher) launcher).getLauncher();
+            LOGGER.log(Level.WARNING, "Unwrapped launcher is of type {0}", launcher == null ? "null" : launcher.getClass().getName());
+        }
+        return launcher;
+    }
+
+    @Override
+    public Computer createComputer() {
+        LOGGER.log(Level.INFO, "Create WOLSlave computer with name {0} and type {1}", new Object[]{name, launcher});
+        return new WOLSlaveComputer(this);
     }
 
     @Extension
