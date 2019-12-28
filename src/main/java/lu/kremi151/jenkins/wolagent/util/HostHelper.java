@@ -32,10 +32,16 @@ public class HostHelper {
     private static final Logger LOGGER = java.util.logging.Logger.getLogger(HostHelper.class.getName());
 
     @Nullable
-    private static final Class<? extends ComputerLauncher> sshLauncherClass;
+    private static Class<? extends ComputerLauncher> sshLauncherClass = null;
 
-    static {
+    private static boolean initialized = false;
+
+    private static synchronized void ensureInitialized() {
+        if (initialized) {
+            return;
+        }
         sshLauncherClass = tryLoadClass("hudson.plugins.sshslaves.SSHLauncher");
+        initialized = true;
     }
 
     @SuppressWarnings("unchecked")
@@ -53,6 +59,7 @@ public class HostHelper {
         if (launcher == null) {
             return null;
         }
+        ensureInitialized();
         if (launcher instanceof WOLLauncher) {
             launcher = WOLLauncher.unpackLauncher(launcher);
         }
@@ -64,6 +71,7 @@ public class HostHelper {
 
     @Nullable
     private static String tryInferSSHLauncherHost(ComputerLauncher launcher) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        ensureInitialized();
         if (sshLauncherClass == null) {
             return null;
         }
