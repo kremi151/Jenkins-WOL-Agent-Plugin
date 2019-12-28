@@ -111,11 +111,6 @@ public class WOLLauncher extends DelegatingComputerLauncher {
 
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        if (StringUtils.isBlank(broadcastIP)) {
-            broadcastIP = "192.168.0.255";
-        }
-        WakeOnLAN.sendMagicPacket(broadcastIP, macAddress);
-
         String host = null;
         try {
             host = HostHelper.tryInferHost(launcher);
@@ -125,8 +120,28 @@ public class WOLLauncher extends DelegatingComputerLauncher {
             listener.getLogger().println("Unable to infer hostname from " + launcher + " (" + e.getMessage() + ")");
             listener.getLogger().println("Using static cooldown instead of pinging");
         }
+
+        if (StringUtils.isNotBlank(host) && StringUtils.isBlank(broadcastIP)) {
+            listener.getLogger().println("No explicit broadcast IP specified, try to guess from the inferred host");
+            try {
+                broadcastIP = HostHelper.tryGuessBroadcastIp(host);
+                listener.getLogger().println("Guessed broadcast IP: " + broadcastIP);
+            } catch (Exception e) {
+                listener.getLogger().println("Unable to guess broadcast IP from inferred host (" + e.getMessage() + ")");
+            }
+        }
+        if (StringUtils.isBlank(broadcastIP)) {
+            listener.getLogger().println("Unable to guess broadcast IP, defaulting to 192.168.0.255");
+            broadcastIP = "192.168.0.255";
+        }
+
+        listener.getLogger().println("Sending magic packet, time to wake up");
+        WakeOnLAN.sendMagicPacket(broadcastIP, macAddress);
+
+        listener.getLogger().println("Pinging node");
         ping(host);
 
+        listener.getLogger().println("Launching agent");
         super.launch(computer, listener);
     }
 

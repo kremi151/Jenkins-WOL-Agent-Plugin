@@ -18,10 +18,13 @@ package lu.kremi151.jenkins.wolagent.util;
 
 import hudson.slaves.ComputerLauncher;
 import lu.kremi151.jenkins.wolagent.launcher.WOLLauncher;
+import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.logging.Logger;
 
 public class HostHelper {
@@ -67,6 +70,29 @@ public class HostHelper {
         Method hostGetter = sshLauncherClass.getDeclaredMethod("getHost");
         hostGetter.setAccessible(true);
         return (String) hostGetter.invoke(launcher);
+    }
+
+    public static boolean isIpAddress(@Nullable String ipAddr) {
+        if (StringUtils.isBlank(ipAddr)) {
+            return false;
+        }
+        return ipAddr.matches("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$");
+    }
+
+    @Nullable
+    public static String tryGuessBroadcastIp(@Nullable String host) throws UnknownHostException {
+        if (StringUtils.isBlank(host)) {
+            return null;
+        }
+        if (!isIpAddress(host)) {
+            InetAddress address = InetAddress.getByName(host);
+            host = address.getHostAddress();
+        }
+        if (!isIpAddress(host)) {
+            return null;
+        }
+        String[] parts = host.split("\\.");
+        return parts[0] + "." + parts[1] + "." + parts[2] + ".255";
     }
 
 }

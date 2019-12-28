@@ -24,6 +24,7 @@ import hudson.slaves.JNLPLauncher;
 import hudson.util.FormValidation;
 import lu.kremi151.jenkins.wolagent.Messages;
 import lu.kremi151.jenkins.wolagent.launcher.WOLLauncher;
+import lu.kremi151.jenkins.wolagent.util.HostHelper;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -198,7 +199,7 @@ public final class WOLSlave extends Slave implements Serializable {
         }
 
         public FormValidation doCheckBroadcastIP(@QueryParameter String broadcastIP) {
-            if (StringUtils.isBlank(broadcastIP) || !broadcastIP.matches("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")) {
+            if (StringUtils.isBlank(broadcastIP) || !HostHelper.isIpAddress(broadcastIP)) {
                 return FormValidation.error(Messages.WOLSlave_InvalidIPAddress());
             }
             return FormValidation.ok();
