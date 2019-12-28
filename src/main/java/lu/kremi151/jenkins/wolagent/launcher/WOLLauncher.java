@@ -18,6 +18,7 @@ package lu.kremi151.jenkins.wolagent.launcher;
 
 import hudson.Extension;
 import hudson.model.Descriptor;
+import hudson.model.DescriptorVisibilityFilter;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.slaves.ComputerLauncher;
@@ -28,6 +29,8 @@ import lu.kremi151.jenkins.wolagent.remoting.callables.Suspend;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.concurrent.*;
@@ -197,6 +200,21 @@ public class WOLLauncher extends DelegatingComputerLauncher {
         @Override
         public String getDisplayName() {
             return null;
+        }
+
+    }
+
+    @Extension
+    public static final class DescriptorVisibilityFilterImpl extends DescriptorVisibilityFilter {
+
+        @Override
+        public boolean filter(@CheckForNull Object context, @Nonnull Descriptor descriptor) {
+            return descriptor.clazz != WOLLauncher.class;
+        }
+
+        @Override
+        public boolean filterType(@Nonnull Class<?> contextClass, @Nonnull Descriptor descriptor) {
+            return descriptor.clazz != WOLLauncher.class;
         }
 
     }

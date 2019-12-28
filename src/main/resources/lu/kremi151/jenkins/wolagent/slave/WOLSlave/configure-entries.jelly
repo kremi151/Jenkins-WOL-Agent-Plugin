@@ -63,18 +63,18 @@ limitations under the License.
   <f:dropdownDescriptorSelector
     title="${%DelegateLaunchMethod}"
     field="launcher"
-    descriptors="${descriptor.getComputerLauncherDescriptors()}"
+    descriptors="${descriptor.computerLauncherDescriptors(it)}"
   />
 
   <f:dropdownDescriptorSelector
     title="${%RetentionStrategy}"
     field="retentionStrategy"
-    descriptors="${descriptor.getRetentionStrategyDescriptors()}"
+    descriptors="${descriptor.retentionStrategyDescriptors(it)}"
   />
 
   <f:descriptorList
     title="${%NodeProperties}"
-    descriptors="${h.getNodePropertyDescriptors(descriptor.clazz)}"
+    descriptors="${descriptor.nodePropertyDescriptors(it)}"
     field="nodeProperties"
   />
 
