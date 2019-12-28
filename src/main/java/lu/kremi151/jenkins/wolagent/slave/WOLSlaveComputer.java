@@ -36,6 +36,7 @@ public class WOLSlaveComputer extends SlaveComputer {
         return new WOLLauncher(
                 WOLSlave.ensureNotNullWithDefault(slave.getLauncher()),
                 slave.getMacAddress(),
+                slave.getBroadcastIP(),
                 slave.getPingInterval(),
                 slave.getConnectionTimeout(),
                 slave.isAutoSuspend(),

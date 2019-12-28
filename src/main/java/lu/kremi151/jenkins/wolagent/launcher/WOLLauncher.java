@@ -27,6 +27,8 @@ import hudson.slaves.SlaveComputer;
 import jline.internal.Nullable;
 import lu.kremi151.jenkins.wolagent.remoting.callables.Suspend;
 import lu.kremi151.jenkins.wolagent.util.HostHelper;
+import lu.kremi151.jenkins.wolagent.util.WakeOnLAN;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.CheckForNull;
@@ -43,6 +45,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
     private static final Logger LOGGER = java.util.logging.Logger.getLogger(WOLLauncher.class.getName());
 
     private transient String macAddress;
+    private transient String broadcastIP;
 
     private transient int pingInterval;
     private transient int connectionTimeout;
@@ -59,6 +62,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
     public WOLLauncher(
             ComputerLauncher launcher,
             String macAddress,
+            String broadcastIP,
             int pingInterval,
             int connectionTimeout,
             boolean autoSuspend,
@@ -67,6 +71,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
     ) {
         this(launcher);
         this.macAddress = macAddress;
+        this.broadcastIP = broadcastIP;
         this.pingInterval = pingInterval;
         this.connectionTimeout = connectionTimeout;
         this.autoSuspend = autoSuspend;
@@ -106,8 +111,10 @@ public class WOLLauncher extends DelegatingComputerLauncher {
 
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        Process process = Runtime.getRuntime().exec("etherwake " + macAddress);
-        process.waitFor(5L, TimeUnit.SECONDS);
+        if (StringUtils.isBlank(broadcastIP)) {
+            broadcastIP = "192.168.0.255";
+        }
+        WakeOnLAN.sendMagicPacket(broadcastIP, macAddress);
 
         String host = null;
         try {

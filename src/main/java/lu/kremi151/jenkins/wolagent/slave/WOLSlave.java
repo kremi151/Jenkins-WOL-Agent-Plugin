@@ -42,6 +42,7 @@ public final class WOLSlave extends Slave implements Serializable {
     private static final Logger LOGGER = java.util.logging.Logger.getLogger(WOLSlave.class.getName());
 
     private String macAddress;
+    private String broadcastIP;
 
     private ComputerLauncher launcher;
 
@@ -58,6 +59,7 @@ public final class WOLSlave extends Slave implements Serializable {
             String remoteFS,
             ComputerLauncher launcher,
             String macAddress,
+            String broadcastIP,
             int pingInterval,
             int connectionTimeout,
             boolean autoSuspend,
@@ -66,6 +68,7 @@ public final class WOLSlave extends Slave implements Serializable {
     ) throws Descriptor.FormException, IOException {
         super(name, remoteFS, null);
         this.macAddress = macAddress;
+        this.broadcastIP = broadcastIP;
         this.pingInterval = pingInterval;
         this.connectionTimeout = connectionTimeout;
         this.autoSuspend = autoSuspend;
@@ -151,6 +154,15 @@ public final class WOLSlave extends Slave implements Serializable {
         return connectionTimeout;
     }
 
+    public String getBroadcastIP() {
+        return broadcastIP;
+    }
+
+    @DataBoundSetter
+    public void setBroadcastIP(String broadcastIP) {
+        this.broadcastIP = broadcastIP;
+    }
+
     static ComputerLauncher ensureNotNullWithDefault(@Nullable ComputerLauncher launcher) {
         if (launcher != null) {
             return launcher;
@@ -183,6 +195,13 @@ public final class WOLSlave extends Slave implements Serializable {
             return (StringUtils.isNotBlank(macAddress) && macAddress.matches("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"))
                     ? FormValidation.ok()
                     : FormValidation.error(Messages.WOLSlave_InvalidMACAddress());
+        }
+
+        public FormValidation doCheckBroadcastIP(@QueryParameter String broadcastIP) {
+            if (StringUtils.isBlank(broadcastIP) || !broadcastIP.matches("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$")) {
+                return FormValidation.error(Messages.WOLSlave_InvalidIPAddress());
+            }
+            return FormValidation.ok();
         }
 
         @Nullable
