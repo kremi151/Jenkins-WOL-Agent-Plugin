@@ -25,7 +25,7 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.SlaveComputer;
 import jline.internal.Nullable;
-import lu.kremi151.jenkins.wolagent.remoting.callables.Suspend;
+import lu.kremi151.jenkins.wolagent.remoting.callables.RunCommand;
 import lu.kremi151.jenkins.wolagent.util.HostHelper;
 import lu.kremi151.jenkins.wolagent.util.WakeOnLAN;
 import org.apache.commons.lang.StringUtils;
@@ -50,9 +50,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
     private transient int pingInterval;
     private transient int connectionTimeout;
 
-    private transient boolean autoSuspend;
-    private transient boolean suspendAsSuperuser;
-    private transient boolean ignoreSessionsOnSuspend;
+    private transient String commandBeforeDisconnect;
 
     @DataBoundConstructor
     public WOLLauncher(ComputerLauncher launcher) {
@@ -65,18 +63,14 @@ public class WOLLauncher extends DelegatingComputerLauncher {
             String broadcastIP,
             int pingInterval,
             int connectionTimeout,
-            boolean autoSuspend,
-            boolean suspendAsSuperuser,
-            boolean ignoreSessionsOnSuspend
+            String commandBeforeDisconnect
     ) {
         this(launcher);
         this.macAddress = macAddress;
         this.broadcastIP = broadcastIP;
         this.pingInterval = pingInterval;
         this.connectionTimeout = connectionTimeout;
-        this.autoSuspend = autoSuspend;
-        this.suspendAsSuperuser = suspendAsSuperuser;
-        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
+        this.commandBeforeDisconnect = commandBeforeDisconnect;
     }
 
     private void ping(@Nullable String host) throws InterruptedException, IOException {
@@ -145,8 +139,8 @@ public class WOLLauncher extends DelegatingComputerLauncher {
         super.launch(computer, listener);
     }
 
-    private void trySuspend(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        if (!autoSuspend) {
+    private void executePreDisconnectCommand(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
+        if (StringUtils.isBlank(commandBeforeDisconnect)) {
             return;
         }
         final Channel channel = computer.getChannel();
@@ -154,42 +148,19 @@ public class WOLLauncher extends DelegatingComputerLauncher {
             listener.error("Cannot send suspend command, channel is null");
             return;
         }
-        channel.call(new Suspend(suspendAsSuperuser, ignoreSessionsOnSuspend));
+        listener.getLogger().println("Execute command before disconnecting: " + commandBeforeDisconnect);
+        channel.call(new RunCommand(commandBeforeDisconnect));
     }
 
     @Override
     public void beforeDisconnect(SlaveComputer computer, TaskListener listener) {
         try {
-            trySuspend(computer, listener);
+            executePreDisconnectCommand(computer, listener);
         } catch (IOException | InterruptedException e) {
             LOGGER.log(Level.WARNING, "An exception occurred while requesting suspending on remote", e);
             listener.getLogger().println("Could not execute suspend command on remote (" + e.getMessage() + ")");
         }
         super.beforeDisconnect(computer, listener);
-    }
-
-    public boolean isAutoSuspend() {
-        return autoSuspend;
-    }
-
-    public void setAutoSuspend(boolean autoSuspend) {
-        this.autoSuspend = autoSuspend;
-    }
-
-    public boolean isSuspendAsSuperuser() {
-        return suspendAsSuperuser;
-    }
-
-    public void setSuspendAsSuperuser(boolean suspendAsSuperuser) {
-        this.suspendAsSuperuser = suspendAsSuperuser;
-    }
-
-    public boolean isIgnoreSessionsOnSuspend() {
-        return ignoreSessionsOnSuspend;
-    }
-
-    public void setIgnoreSessionsOnSuspend(boolean ignoreSessionsOnSuspend) {
-        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
     }
 
     public int getPingInterval() {
@@ -214,6 +185,14 @@ public class WOLLauncher extends DelegatingComputerLauncher {
 
     public void setMacAddress(String macAddress) {
         this.macAddress = macAddress;
+    }
+
+    public String getCommandBeforeDisconnect() {
+        return commandBeforeDisconnect;
+    }
+
+    public void setCommandBeforeDisconnect(String commandBeforeDisconnect) {
+        this.commandBeforeDisconnect = commandBeforeDisconnect;
     }
 
     @Nullable

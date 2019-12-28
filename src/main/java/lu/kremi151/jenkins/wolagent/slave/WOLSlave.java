@@ -50,9 +50,7 @@ public final class WOLSlave extends Slave implements Serializable {
     private int pingInterval;
     private int connectionTimeout;
 
-    private boolean autoSuspend;
-    private boolean suspendAsSuperuser;
-    private boolean ignoreSessionsOnSuspend;
+    private String commandBeforeDisconnect;
 
     @DataBoundConstructor
     public WOLSlave(
@@ -63,18 +61,14 @@ public final class WOLSlave extends Slave implements Serializable {
             String broadcastIP,
             int pingInterval,
             int connectionTimeout,
-            boolean autoSuspend,
-            boolean suspendAsSuperuser,
-            boolean ignoreSessionsOnSuspend
+            String commandBeforeDisconnect
     ) throws Descriptor.FormException, IOException {
         super(name, remoteFS, null);
         this.macAddress = macAddress;
         this.broadcastIP = broadcastIP;
         this.pingInterval = pingInterval;
         this.connectionTimeout = connectionTimeout;
-        this.autoSuspend = autoSuspend;
-        this.suspendAsSuperuser = suspendAsSuperuser;
-        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
+        this.commandBeforeDisconnect = commandBeforeDisconnect;
 
         launcher = WOLLauncher.unpackLauncher(launcher);
         LOGGER.log(Level.INFO, "Construct delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
@@ -107,32 +101,13 @@ public final class WOLSlave extends Slave implements Serializable {
     }
 
     @DataBoundSetter
-    public void setAutoSuspend(boolean autoSuspend) {
-        LOGGER.log(Level.INFO, "Set auto suspend to {0}", autoSuspend);
-        this.autoSuspend = autoSuspend;
+    public void setCommandBeforeDisconnect(String commandBeforeDisconnect) {
+        LOGGER.log(Level.INFO, "Set command before disconnect to {0}", commandBeforeDisconnect);
+        this.commandBeforeDisconnect = commandBeforeDisconnect;
     }
 
-    public boolean isAutoSuspend() {
-        return autoSuspend;
-    }
-
-    @DataBoundSetter
-    public void setSuspendAsSuperuser(boolean suspendAsSuperuser) {
-        LOGGER.log(Level.INFO, "Set suspend as superuser to {0}", suspendAsSuperuser);
-        this.suspendAsSuperuser = suspendAsSuperuser;
-    }
-
-    public boolean isSuspendAsSuperuser() {
-        return suspendAsSuperuser;
-    }
-
-    @DataBoundSetter
-    public void setIgnoreSessionsOnSuspend(boolean ignoreSessionsOnSuspend) {
-        this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
-    }
-
-    public boolean isIgnoreSessionsOnSuspend() {
-        return ignoreSessionsOnSuspend;
+    public String getCommandBeforeDisconnect() {
+        return commandBeforeDisconnect;
     }
 
     @DataBoundSetter

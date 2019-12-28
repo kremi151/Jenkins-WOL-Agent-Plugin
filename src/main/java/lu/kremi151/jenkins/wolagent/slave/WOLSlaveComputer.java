@@ -39,9 +39,7 @@ public class WOLSlaveComputer extends SlaveComputer {
                 slave.getBroadcastIP(),
                 slave.getPingInterval(),
                 slave.getConnectionTimeout(),
-                slave.isAutoSuspend(),
-                slave.isSuspendAsSuperuser(),
-                slave.isIgnoreSessionsOnSuspend()
+                slave.getCommandBeforeDisconnect()
         );
     }
 

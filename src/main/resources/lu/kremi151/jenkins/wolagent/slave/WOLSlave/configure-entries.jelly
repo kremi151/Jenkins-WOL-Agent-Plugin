@@ -70,18 +70,12 @@ limitations under the License.
     </f:advanced>
   </f:section>
 
-  <f:section title="${%SectionSuspend}">
-    <f:entry title="${%AutoSuspend}" field="autoSuspend">
-      <f:checkbox/>
-    </f:entry>
-
-    <f:entry title="${%SuspendAsSuperuser}" field="suspendAsSuperuser">
-      <f:checkbox/>
-    </f:entry>
-
-    <f:entry title="${%IgnoreSessionsOnSuspend}" field="ignoreSessionsOnSuspend">
-      <f:checkbox/>
-    </f:entry>
+  <f:section title="${%SectionCustomCommands}">
+    <f:advanced>
+      <f:entry title="${%CommandBeforeDisconnect}" field="commandBeforeDisconnect">
+        <f:textbox/>
+      </f:entry>
+    </f:advanced>
   </f:section>
 
   <f:descriptorList

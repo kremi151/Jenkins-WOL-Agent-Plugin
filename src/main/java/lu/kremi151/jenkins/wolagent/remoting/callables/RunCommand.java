@@ -20,28 +20,19 @@ import jenkins.security.MasterToSlaveCallable;
 
 import java.io.IOException;
 
-public class Suspend extends MasterToSlaveCallable<Void, IOException> {
+public class RunCommand extends MasterToSlaveCallable<Void, IOException> {
 
-    private boolean superuser;
-    private boolean ignoreSessions;
+    private String command;
 
-    public Suspend(){}
+    public RunCommand(){}
 
-    public Suspend(boolean superuser, boolean ignoreSessions) {
-        this.superuser = superuser;
-        this.ignoreSessions = ignoreSessions;
+    public RunCommand(String command) {
+        this.command = command;
     }
 
     @Override
     public Void call() throws IOException {
-        String suspendCommand = "systemctl suspend";
-        if (superuser) {
-            suspendCommand = "sudo " + suspendCommand;
-        }
-        if (ignoreSessions) {
-            suspendCommand = suspendCommand + " -i";
-        }
-        Runtime.getRuntime().exec(suspendCommand);
+        Runtime.getRuntime().exec(command);
         return null;
     }
 
