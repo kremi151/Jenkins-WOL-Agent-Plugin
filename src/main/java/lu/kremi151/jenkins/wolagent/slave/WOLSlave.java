@@ -17,12 +17,10 @@
 package lu.kremi151.jenkins.wolagent.slave;
 
 import hudson.Extension;
-import hudson.Functions;
 import hudson.model.Computer;
 import hudson.model.Slave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
-import hudson.slaves.RetentionStrategy;
 import hudson.util.FormValidation;
 import lu.kremi151.jenkins.wolagent.Messages;
 import lu.kremi151.jenkins.wolagent.launcher.WOLLauncher;
@@ -36,10 +34,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public final class WOLSlave extends Slave implements Serializable {
 
@@ -228,17 +224,6 @@ public final class WOLSlave extends Slave implements Serializable {
             return errorMessage == null
                     ? FormValidation.ok()
                     : FormValidation.error(errorMessage);
-        }
-
-        public List<hudson.model.Descriptor<ComputerLauncher>> getComputerLauncherDescriptors() {
-            return Functions.getComputerLauncherDescriptors()
-                    .stream()
-                    .filter(descriptor -> !WOLLauncher.DescriptorImpl.class.isAssignableFrom(descriptor.getClass()))
-                    .collect(Collectors.toList());
-        }
-
-        public List<hudson.model.Descriptor<RetentionStrategy<?>>> getRetentionStrategyDescriptors() {
-            return Functions.getRetentionStrategyDescriptors();
         }
 
     }
