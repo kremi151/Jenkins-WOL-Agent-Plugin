@@ -26,12 +26,13 @@ import hudson.slaves.DelegatingComputerLauncher;
 import hudson.slaves.SlaveComputer;
 import jline.internal.Nullable;
 import lu.kremi151.jenkins.wolagent.remoting.callables.Suspend;
+import lu.kremi151.jenkins.wolagent.util.HostHelper;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.util.concurrent.*;
 import java.util.logging.Level;
@@ -73,12 +74,6 @@ public class WOLLauncher extends DelegatingComputerLauncher {
         this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
     }
 
-    @DataBoundSetter
-    public void setLauncher(ComputerLauncher launcher) {
-        LOGGER.log(Level.INFO, "Set delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
-        this.launcher = launcher;
-    }
-
     private void ping(@Nullable String host) throws InterruptedException, IOException {
         if (host == null) {
             // No host specified, so we apply a cooldown of 5 seconds
@@ -114,8 +109,16 @@ public class WOLLauncher extends DelegatingComputerLauncher {
         Process process = Runtime.getRuntime().exec("etherwake " + macAddress);
         process.waitFor(5L, TimeUnit.SECONDS);
 
-        //TODO: Find a way to ping the host
-        ping(null);
+        String host = null;
+        try {
+            host = HostHelper.tryInferHost(launcher);
+            listener.getLogger().println("Inferred host name: " + host);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            LOGGER.log(Level.WARNING, "Unable to infer host via reflection from launcher", e);
+            listener.getLogger().println("Unable to infer hostname from " + launcher + " (" + e.getMessage() + ")");
+            listener.getLogger().println("Using static cooldown instead of pinging");
+        }
+        ping(host);
 
         super.launch(computer, listener);
     }
@@ -138,6 +141,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
             trySuspend(computer, listener);
         } catch (IOException | InterruptedException e) {
             LOGGER.log(Level.WARNING, "An exception occurred while requesting suspending on remote", e);
+            listener.getLogger().println("Could not execute suspend command on remote (" + e.getMessage() + ")");
         }
         super.beforeDisconnect(computer, listener);
     }

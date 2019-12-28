@@ -32,5 +32,5 @@ jenkinsPlugin {
 dependencies {
     compileOnly group: 'org.jenkins-ci', name: 'trilead-ssh2', version: 'build-217-jenkins-11'
 
-    // jenkinsPlugins group: 'org.jenkins-ci.plugins', name: 'ssh-slaves', version: '1.31.0', ext: 'jar'
+    optionalJenkinsPlugins group: 'org.jenkins-ci.plugins', name: 'ssh-slaves', version: '1.31.0', ext: 'jar'
 }

@@ -2,6 +2,11 @@
 
 A plugin for Jenkins CI to start agents with Wake on LAN functionality
 
+## Compatibility with other plugins
+
+* Jenkins SSH Slaves Plugin
+See https://github.com/jenkinsci/ssh-slaves-plugin
+
 ## Development
 
 ### Setup
