@@ -17,6 +17,7 @@
 package lu.kremi151.jenkins.wolagent.util;
 
 import hudson.slaves.ComputerLauncher;
+import lu.kremi151.jenkins.wolagent.launcher.WOLLauncher;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.InvocationTargetException;
@@ -48,6 +49,9 @@ public class HostHelper {
     public static String tryInferHost(@Nullable ComputerLauncher launcher) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
         if (launcher == null) {
             return null;
+        }
+        if (launcher instanceof WOLLauncher) {
+            launcher = WOLLauncher.unpackLauncher(launcher);
         }
         if (sshLauncherClass != null && sshLauncherClass.isAssignableFrom(launcher.getClass())) {
             return tryInferSSHLauncherHost(launcher);

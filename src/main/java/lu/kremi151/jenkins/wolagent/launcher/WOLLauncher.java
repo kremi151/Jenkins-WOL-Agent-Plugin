@@ -194,6 +194,17 @@ public class WOLLauncher extends DelegatingComputerLauncher {
         this.macAddress = macAddress;
     }
 
+    @Nullable
+    public static ComputerLauncher unpackLauncher(@javax.annotation.Nullable ComputerLauncher launcher) {
+        // Unpack WOLLauncher until we reach the base delegate launcher
+        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
+            LOGGER.log(Level.WARNING, "Got launcher of type {0}, unpacking it", launcher.getClass().getName());
+            launcher = ((WOLLauncher) launcher).getLauncher();
+            LOGGER.log(Level.WARNING, "Unwrapped launcher is of type {0}", launcher == null ? "null" : launcher.getClass().getName());
+        }
+        return launcher;
+    }
+
     @Extension
     public static final class DescriptorImpl extends Descriptor<ComputerLauncher> {
 
