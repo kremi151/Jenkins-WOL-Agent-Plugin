@@ -72,7 +72,7 @@ public final class WOLSlave extends Slave implements Serializable {
         this.suspendAsSuperuser = suspendAsSuperuser;
         this.ignoreSessionsOnSuspend = ignoreSessionsOnSuspend;
 
-        launcher = unpackLauncher(launcher);
+        launcher = WOLLauncher.unpackLauncher(launcher);
         LOGGER.log(Level.INFO, "Construct delegate launcher of type " + (launcher == null ? "null" : launcher.getClass()));
         this.launcher = ensureNotNullWithDefault(launcher);
     }
@@ -80,14 +80,14 @@ public final class WOLSlave extends Slave implements Serializable {
     @Override
     public ComputerLauncher getLauncher() {
         LOGGER.log(Level.INFO, "Get launcher");
-        ComputerLauncher launcher = unpackLauncher(this.launcher);
+        ComputerLauncher launcher = WOLLauncher.unpackLauncher(this.launcher);
         return ensureNotNullWithDefault(launcher);
     }
 
     @Override
     @DataBoundSetter
     public void setLauncher(ComputerLauncher launcher) {
-        launcher = unpackLauncher(launcher);
+        launcher = WOLLauncher.unpackLauncher(launcher);
         LOGGER.log(Level.INFO, "Set launcher of type " + (launcher == null ? "null" : launcher.getClass()));
         this.launcher = ensureNotNullWithDefault(launcher);
     }
@@ -157,17 +157,6 @@ public final class WOLSlave extends Slave implements Serializable {
         }
         // This is the most simply launcher to configure, so we use it as a fallback
         return new JNLPLauncher(false);
-    }
-
-    @Nullable
-    private static ComputerLauncher unpackLauncher(@Nullable ComputerLauncher launcher) {
-        // Unpack WOLLauncher until we reach the base delegate launcher
-        while (launcher != null && launcher.getClass() == WOLLauncher.class) {
-            LOGGER.log(Level.WARNING, "Got launcher of type {0}, unpacking it", launcher.getClass().getName());
-            launcher = ((WOLLauncher) launcher).getLauncher();
-            LOGGER.log(Level.WARNING, "Unwrapped launcher is of type {0}", launcher == null ? "null" : launcher.getClass().getName());
-        }
-        return launcher;
     }
 
     @Override
