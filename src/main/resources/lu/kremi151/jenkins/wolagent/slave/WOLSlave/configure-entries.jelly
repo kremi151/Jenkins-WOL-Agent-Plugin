@@ -18,59 +18,65 @@ limitations under the License.
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-  <f:entry title="${%Description}" help="/help/system-config/master-slave/description.html">
-    <f:textbox field="nodeDescription"/>
-  </f:entry>
+  <f:section title="${%SectionGeneral}">
+    <f:entry title="${%Description}" help="/help/system-config/master-slave/description.html">
+      <f:textbox field="nodeDescription"/>
+    </f:entry>
 
-  <f:entry title="${%NbrOfExecutors}" field="numExecutors">
-    <f:textbox/>
-  </f:entry>
+    <f:entry title="${%NbrOfExecutors}" field="numExecutors">
+      <f:textbox/>
+    </f:entry>
 
-  <f:entry title="${%RemoteFSRoot}" field="remoteFS">
-    <f:textbox/>
-  </f:entry>
+    <f:entry title="${%RemoteFSRoot}" field="remoteFS">
+      <f:textbox/>
+    </f:entry>
 
-  <f:entry title="${%Labels}" field="labelString">
-    <f:textbox/>
-  </f:entry>
+    <f:entry title="${%Labels}" field="labelString">
+      <f:textbox/>
+    </f:entry>
 
-  <f:slave-mode name="mode" node="${it}"/>
+    <f:slave-mode name="mode" node="${it}"/>
 
-  <f:entry title="${%MacAddress}" field="macAddress">
-    <f:textbox/>
-  </f:entry>
+    <f:dropdownDescriptorSelector
+      title="${%DelegateLaunchMethod}"
+      field="launcher"
+      descriptors="${descriptor.computerLauncherDescriptors(it)}"
+    />
 
-  <f:entry title="${%PingInterval}" field="pingInterval">
-    <f:number default="2000"/>
-  </f:entry>
+    <f:dropdownDescriptorSelector
+      title="${%RetentionStrategy}"
+      field="retentionStrategy"
+      descriptors="${descriptor.retentionStrategyDescriptors(it)}"
+    />
+  </f:section>
 
-  <f:entry title="${%ConnectionTimeout}" field="connectionTimeout">
-    <f:number default="60000"/>
-  </f:entry>
+  <f:section title="${%SectionWOL}">
+    <f:entry title="${%MacAddress}" field="macAddress">
+      <f:textbox/>
+    </f:entry>
 
-  <f:entry title="${%AutoSuspend}" field="autoSuspend">
-    <f:checkbox/>
-  </f:entry>
+    <f:entry title="${%PingInterval}" field="pingInterval">
+      <f:number default="2000"/>
+    </f:entry>
 
-  <f:entry title="${%SuspendAsSuperuser}" field="suspendAsSuperuser">
-    <f:checkbox/>
-  </f:entry>
+    <f:entry title="${%ConnectionTimeout}" field="connectionTimeout">
+      <f:number default="60000"/>
+    </f:entry>
+  </f:section>
 
-  <f:entry title="${%IgnoreSessionsOnSuspend}" field="ignoreSessionsOnSuspend">
-    <f:checkbox/>
-  </f:entry>
+  <f:section title="${%SectionSuspend}">
+    <f:entry title="${%AutoSuspend}" field="autoSuspend">
+      <f:checkbox/>
+    </f:entry>
 
-  <f:dropdownDescriptorSelector
-    title="${%DelegateLaunchMethod}"
-    field="launcher"
-    descriptors="${descriptor.computerLauncherDescriptors(it)}"
-  />
+    <f:entry title="${%SuspendAsSuperuser}" field="suspendAsSuperuser">
+      <f:checkbox/>
+    </f:entry>
 
-  <f:dropdownDescriptorSelector
-    title="${%RetentionStrategy}"
-    field="retentionStrategy"
-    descriptors="${descriptor.retentionStrategyDescriptors(it)}"
-  />
+    <f:entry title="${%IgnoreSessionsOnSuspend}" field="ignoreSessionsOnSuspend">
+      <f:checkbox/>
+    </f:entry>
+  </f:section>
 
   <f:descriptorList
     title="${%NodeProperties}"
