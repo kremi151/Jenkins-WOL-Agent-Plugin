@@ -1,11 +1,16 @@
 plugins {
     id "org.jenkins-ci.jpi" version "0.35.0"
     id "java"
+    id "checkstyle"
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+checkstyle {
+    toolVersion '6.9'
 }
 
 group 'lu.kremi151'
@@ -27,6 +32,11 @@ jenkinsPlugin {
             email "kremi151dev@gmail.com"
         }
     }
+}
+
+tasks.withType(Checkstyle) {
+    // Generated sources go here
+    exclude 'lu/kremi151/jenkins/wolagent/Messages.java'
 }
 
 dependencies {
