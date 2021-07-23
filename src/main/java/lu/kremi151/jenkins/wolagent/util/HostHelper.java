@@ -25,17 +25,29 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.logging.Logger;
 
-public class HostHelper {
-
-    private static final Logger LOGGER = java.util.logging.Logger.getLogger(HostHelper.class.getName());
+/**
+ * Utility class for interacting with the SSH Slaves Plugin
+ * (see https://github.com/jenkinsci/ssh-slaves-plugin) and for WOL specific helper methods.
+ */
+public final class HostHelper {
 
     @Nullable
     private static Class<? extends ComputerLauncher> sshLauncherClass = null;
 
     private static boolean initialized = false;
 
+    /**
+     * Internal dummy constructor for this utility class.
+     * This documentation mainly exists to shut checkstyle.
+     */
+    private HostHelper() {
+    }
+
+    /**
+     * Initializes {@link HostHelper}, if not already done.
+     * This method will try to access the SSH Slaves plugin if loaded.
+     */
     private static synchronized void ensureInitialized() {
         if (initialized) {
             return;
@@ -44,9 +56,16 @@ public class HostHelper {
         initialized = true;
     }
 
+    /**
+     * Tries to load a Java class via reflection.
+     * On failure, it will gracefully return {@code null}.
+     * @param name The fully qualified class name.
+     * @param <T> The base type of the class to load.
+     * @return The class if loaded, or {@code null} otherwise.
+     */
     @SuppressWarnings("unchecked")
     @Nullable
-    private static <T> Class<T> tryLoadClass(String name) {
+    private static <T> Class<T> tryLoadClass(final String name) {
         try {
             return (Class<T>) Class.forName(name);
         } catch (ClassNotFoundException e) {
@@ -54,23 +73,52 @@ public class HostHelper {
         }
     }
 
+    /**
+     * Tries to read the hostname of the given {@link ComputerLauncher}, if it comes from the
+     * SSH Slaves plugin.
+     * This method supports launchers wrapped in a {@link WOLLauncher}.
+     * @param launcher The {@link ComputerLauncher} to extract the information from.
+     * @return If the given {@link ComputerLauncher} comes from the SSH Slaves plugin, the
+     *         hostname.
+     *         If not, {@code null}.
+     * @throws NoSuchMethodException     In case of a reflection error.
+     * @throws IllegalAccessException    In case of a reflection error.
+     * @throws InvocationTargetException In case of a reflection error.
+     */
     @Nullable
-    public static String tryInferHost(@Nullable ComputerLauncher launcher) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        if (launcher == null) {
+    public static String tryInferHost(@Nullable final ComputerLauncher launcher)
+            throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        ComputerLauncher unpacked = launcher;
+        if (unpacked == null) {
             return null;
         }
         ensureInitialized();
-        if (launcher instanceof WOLLauncher) {
-            launcher = WOLLauncher.unpackLauncher(launcher);
+        if (unpacked instanceof WOLLauncher) {
+            unpacked = WOLLauncher.unpackLauncher(unpacked);
+            if (unpacked == null) {
+                return null;
+            }
         }
-        if (sshLauncherClass != null && sshLauncherClass.isAssignableFrom(launcher.getClass())) {
-            return tryInferSSHLauncherHost(launcher);
+        if (sshLauncherClass != null && sshLauncherClass.isAssignableFrom(unpacked.getClass())) {
+            return tryInferSSHLauncherHost(unpacked);
         }
         return null;
     }
 
+    /**
+     * Tries to read the hostname of the given {@link ComputerLauncher}, if it comes from the
+     * SSH Slaves plugin.
+     * @param launcher The {@link ComputerLauncher} to extract the information from.
+     * @return If the given {@link ComputerLauncher} comes from the SSH Slaves plugin, the
+     *         hostname.
+     *         If not, {@code null}.
+     * @throws NoSuchMethodException     In case of a reflection error.
+     * @throws InvocationTargetException In case of a reflection error.
+     * @throws IllegalAccessException    In case of a reflection error.
+     */
     @Nullable
-    private static String tryInferSSHLauncherHost(ComputerLauncher launcher) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    private static String tryInferSSHLauncherHost(final ComputerLauncher launcher)
+            throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         ensureInitialized();
         if (sshLauncherClass == null) {
             return null;
@@ -80,26 +128,40 @@ public class HostHelper {
         return (String) hostGetter.invoke(launcher);
     }
 
-    public static boolean isIpAddress(@Nullable String ipAddr) {
+    /**
+     * Checks whether the given string is a valid IP address.
+     * @param ipAddr The string to check.
+     * @return {@code true} if valid, {@code false} if invalid.
+     */
+    public static boolean isIpAddress(@Nullable final String ipAddr) {
         if (StringUtils.isBlank(ipAddr)) {
             return false;
         }
-        return ipAddr.matches("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$");
+        return ipAddr.matches("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}"
+                        + "([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$");
     }
 
+    /**
+     * Tries to guess the broadcast IP address based on the given hostname.
+     * @param host The hostname.
+     * @return The broadcast IP address if it could be guessed, {@code null} otherwise.
+     * @throws UnknownHostException If no IP address for the hostname could be found.
+     */
     @Nullable
-    public static String tryGuessBroadcastIp(@Nullable String host) throws UnknownHostException {
-        if (StringUtils.isBlank(host)) {
+    public static String tryGuessBroadcastIp(@Nullable final String host)
+            throws UnknownHostException {
+        String inHost = host;
+        if (StringUtils.isBlank(inHost)) {
             return null;
         }
-        if (!isIpAddress(host)) {
-            InetAddress address = InetAddress.getByName(host);
-            host = address.getHostAddress();
+        if (!isIpAddress(inHost)) {
+            InetAddress address = InetAddress.getByName(inHost);
+            inHost = address.getHostAddress();
         }
-        if (!isIpAddress(host)) {
+        if (!isIpAddress(inHost)) {
             return null;
         }
-        String[] parts = host.split("\\.");
+        String[] parts = inHost.split("\\.");
         return parts[0] + "." + parts[1] + "." + parts[2] + ".255";
     }
 

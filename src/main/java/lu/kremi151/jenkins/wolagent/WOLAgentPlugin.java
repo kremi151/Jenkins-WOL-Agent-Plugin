@@ -18,6 +18,9 @@ package lu.kremi151.jenkins.wolagent;
 
 import hudson.Plugin;
 
+/**
+ * Main entrypoint for the Wake-on-LAN plugin.
+ */
 public class WOLAgentPlugin extends Plugin {
 
 }

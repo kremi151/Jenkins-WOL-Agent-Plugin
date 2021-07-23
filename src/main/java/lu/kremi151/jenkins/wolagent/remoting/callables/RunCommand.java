@@ -20,18 +20,28 @@ import jenkins.security.MasterToSlaveCallable;
 
 import java.io.IOException;
 
+/**
+ * {@link hudson.remoting.Callable} implementation which performs a command on a machine.
+ */
 public class RunCommand extends MasterToSlaveCallable<Void, IOException> {
 
     private String command;
 
-    public RunCommand(){}
+    /**
+     * Creates an instance of {@link RunCommand} without command.
+     */
+    public RunCommand() { }
 
-    public RunCommand(String command) {
+    /**
+     * Creates an instance of {@link RunCommand} with command.
+     * @param command the command to execute
+     */
+    public RunCommand(final String command) {
         this.command = command;
     }
 
     @Override
-    public Void call() throws IOException {
+    public final Void call() throws IOException {
         Runtime.getRuntime().exec(command);
         return null;
     }

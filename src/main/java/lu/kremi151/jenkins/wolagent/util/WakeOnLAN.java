@@ -17,24 +17,55 @@
 package lu.kremi151.jenkins.wolagent.util;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class WakeOnLAN {
+/**
+ * Utility class for sending Wake-on-LAN magic packets.
+ */
+public final class WakeOnLAN {
 
-    private static final Logger LOGGER = java.util.logging.Logger.getLogger(WakeOnLAN.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(WakeOnLAN.class.getName());
 
     private static final int PORT = 9;
 
-    public static void sendMagicPacket(String broadcastIpAddr, String macAddr) throws IOException {
-        LOGGER.log(Level.INFO, "Sending magic packet to broadcast IP {0} for MAC {1}", new Object[]{ broadcastIpAddr, macAddr });
+    private static final int NUM_LEADING_MAGIC_BYTES = 6;
+    private static final int NUM_MAC_MAGIC_BYTES = 16;
+
+    private static final int NUM_MAC_ADDRESS_PARTS = 6;
+
+    private static final int RADIX_HEXADECIMAL = 16;
+
+    private static final byte VAL_LEADING_MAGIC_BYTE = (byte) 0xff;
+
+    /**
+     * Internal dummy constructor for this utility class.
+     * This documentation mainly exists to shut checkstyle.
+     */
+    private WakeOnLAN() {
+    }
+
+    /**
+     * Sends a magic packet for a given device denoted by the MAC address to the given broadcast
+     * IP address.
+     * @param broadcastIpAddr The broadcast IP address.
+     * @param macAddr         The MAC address of the target device.
+     * @throws IOException    In case of an I/O error.
+     */
+    public static void sendMagicPacket(final String broadcastIpAddr, final String macAddr)
+            throws IOException {
+        LOGGER.log(Level.INFO,
+                "Sending magic packet to broadcast IP {0} for MAC {1}",
+                new Object[]{broadcastIpAddr, macAddr});
         byte[] macBytes = convertMacToBytes(macAddr);
-        byte[] bytes = new byte[6 + 16 * macBytes.length];
-        for (int i = 0; i < 6; i++) {
-            bytes[i] = (byte) 0xff;
+        byte[] bytes = new byte[NUM_LEADING_MAGIC_BYTES + NUM_MAC_MAGIC_BYTES * macBytes.length];
+        for (int i = 0; i < NUM_LEADING_MAGIC_BYTES; i++) {
+            bytes[i] = VAL_LEADING_MAGIC_BYTE;
         }
-        for (int i = 6; i < bytes.length; i += macBytes.length) {
+        for (int i = NUM_LEADING_MAGIC_BYTES; i < bytes.length; i += macBytes.length) {
             System.arraycopy(macBytes, 0, bytes, i, macBytes.length);
         }
 
@@ -46,15 +77,21 @@ public class WakeOnLAN {
         LOGGER.log(Level.INFO, "Magic packet has been sent");
     }
 
-    private static byte[] convertMacToBytes(String macStr) throws IllegalArgumentException {
-        byte[] bytes = new byte[6];
+    /**
+     * Converts the given MAC string to a byte array representation.
+     * @param macStr The MAC address as a string.
+     * @return The MAC address as a byte array.
+     * @throws IllegalArgumentException If the given string is not a valid MAC address.
+     */
+    private static byte[] convertMacToBytes(final String macStr) throws IllegalArgumentException {
+        byte[] bytes = new byte[NUM_MAC_ADDRESS_PARTS];
         String[] hex = macStr.split("([:\\-])");
-        if (hex.length != 6) {
+        if (hex.length != NUM_MAC_ADDRESS_PARTS) {
             throw new IllegalArgumentException("Invalid MAC address");
         }
         try {
-            for (int i = 0; i < 6; i++) {
-                bytes[i] = (byte) Integer.parseInt(hex[i], 16);
+            for (int i = 0; i < NUM_MAC_ADDRESS_PARTS; i++) {
+                bytes[i] = (byte) Integer.parseInt(hex[i], RADIX_HEXADECIMAL);
             }
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid hex digit in MAC address");

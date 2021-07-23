@@ -21,16 +21,25 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
 import lu.kremi151.jenkins.wolagent.launcher.WOLLauncher;
 
+/**
+ * Extension of {@link SlaveComputer} which enforces a {@link WOLLauncher} to be used as the
+ * launcher.
+ */
 public class WOLSlaveComputer extends SlaveComputer {
 
-    public WOLSlaveComputer(WOLSlave slave) {
+    /**
+     * Creates an instance of {@link WOLSlaveComputer}.
+     * @param slave the slave of type {@link WOLSlave}
+     */
+    public WOLSlaveComputer(final WOLSlave slave) {
         super(slave);
     }
 
     @Override
-    protected ComputerLauncher grabLauncher(Node node) {
+    protected final ComputerLauncher grabLauncher(final Node node) {
         if (!WOLSlave.class.isAssignableFrom(node.getClass())) {
-            throw new IllegalArgumentException("Provided node must be of type " + WOLSlave.class.getName());
+            throw new IllegalArgumentException("Provided node must be of type "
+                    + WOLSlave.class.getName());
         }
         WOLSlave slave = (WOLSlave) node;
         return new WOLLauncher(
