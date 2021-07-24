@@ -25,14 +25,20 @@ pipeline {
 				sh 'chmod +x gradlew'
 			}
 		}
+		stage('Build') {
+			steps {
+				sh './gradlew jpi -x test -x checkstyleMain'
+			}
+		}
 		stage('Check code style') {
 			steps {
 				sh './gradlew checkstyleMain'
 			}
-		}
-		stage('Build') {
-			steps {
-				sh './gradlew build -x test -x checkstyleMain'
+			post {
+				always {
+					// Upload checkstyle report using Warnings Next Generation Plugin
+					recordIssues enabledForFailure: true, aggregatingResults: true, tool: checkStyle(pattern: 'build/reports/checkstyle/*.xml')
+				}
 			}
 		}
 	}
