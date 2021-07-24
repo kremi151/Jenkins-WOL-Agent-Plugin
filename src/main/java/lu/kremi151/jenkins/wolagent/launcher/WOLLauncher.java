@@ -285,7 +285,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
      * Helper method to retrieve the class name of a nullable {@link ComputerLauncher} instance.
      * Used for logging purposes.
      * @param launcher the {@link ComputerLauncher} instance
-     * @return the class name or {@value "null"} is the instance is {@code null}
+     * @return the class name or {@code "null"} if the instance is {@code null}
      */
     public static String getLauncherClassName(@Nullable final ComputerLauncher launcher) {
         if (launcher == null) {
