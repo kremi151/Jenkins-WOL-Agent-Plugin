@@ -11,6 +11,9 @@ void setBuildStatus(String message, String state) {
 
 pipeline {
 	agent any
+	environment {
+		GRADLE_OPTS='-Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2'
+	}
 	stages {
 		stage('Notify GitHub') {
 			steps {
