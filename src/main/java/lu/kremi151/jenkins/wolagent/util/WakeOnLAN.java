@@ -41,11 +41,14 @@ public final class WakeOnLAN {
 
     private static final byte VAL_LEADING_MAGIC_BYTE = (byte) 0xff;
 
+    private final CheckedSupplier<DatagramSocket> socketSupplier;
+
     /**
-     * Internal dummy constructor for this utility class.
-     * This documentation mainly exists to shut checkstyle.
+     * Creates an instance of {@link WakeOnLAN}.
+     * @param socketSupplier A factory for {@link DatagramSocket} instances.
      */
-    private WakeOnLAN() {
+    public WakeOnLAN(final CheckedSupplier<DatagramSocket> socketSupplier) {
+        this.socketSupplier = socketSupplier;
     }
 
     /**
@@ -55,7 +58,7 @@ public final class WakeOnLAN {
      * @param macAddr         The MAC address of the target device.
      * @throws IOException    In case of an I/O error.
      */
-    public static void sendMagicPacket(final String broadcastIpAddr, final String macAddr)
+    public void sendMagicPacket(final String broadcastIpAddr, final String macAddr)
             throws IOException {
         LOGGER.log(Level.INFO,
                 "Sending magic packet to broadcast IP {0} for MAC {1}",
@@ -71,7 +74,12 @@ public final class WakeOnLAN {
 
         InetAddress address = InetAddress.getByName(broadcastIpAddr);
         DatagramPacket packet = new DatagramPacket(bytes, bytes.length, address, PORT);
-        DatagramSocket socket = new DatagramSocket();
+        DatagramSocket socket;
+        try {
+            socket = socketSupplier.get();
+        } catch (Exception e) {
+            throw new IOException("An error occurred while creating a socket", e);
+        }
         socket.send(packet);
         socket.close();
         LOGGER.log(Level.INFO, "Magic packet has been sent");

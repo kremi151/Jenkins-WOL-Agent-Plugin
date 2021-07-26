@@ -27,6 +27,11 @@ pipeline {
 				sh './gradlew jpi javadocJar -x test -x checkstyleMain'
 			}
 		}
+		stage('Test') {
+			steps {
+				sh './gradlew test -x checkstyleMain'
+			}
+		}
 		stage('Check code style') {
 			steps {
 				sh './gradlew checkstyleMain'

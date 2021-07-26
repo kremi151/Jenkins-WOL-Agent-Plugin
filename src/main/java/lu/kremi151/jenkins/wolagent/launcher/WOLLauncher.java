@@ -35,6 +35,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,6 +63,8 @@ public class WOLLauncher extends DelegatingComputerLauncher {
 
     @Nullable
     private transient String commandBeforeDisconnect;
+
+    private final transient WakeOnLAN wakeOnLAN = new WakeOnLAN(DatagramSocket::new);
 
     /**
      * Creates an instance of {@link WOLLauncher}.
@@ -171,7 +174,7 @@ public class WOLLauncher extends DelegatingComputerLauncher {
         }
 
         listener.getLogger().println("Sending magic packet, time to wake up");
-        WakeOnLAN.sendMagicPacket(broadcastIP, macAddress);
+        wakeOnLAN.sendMagicPacket(broadcastIP, macAddress);
 
         listener.getLogger().println("Pinging node");
         ping(host);
